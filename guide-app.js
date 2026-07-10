@@ -521,17 +521,56 @@ function setupAudioEvents(audioObj) {
 
 function togglePlay() {
   const audioUrl = window.currentAudioUrl;
-  if (!audioUrl) return;
+  console.log("togglePlay(), audioUrl:", audioUrl);
+  
+  if (!audioUrl) {
+    console.log("No audioUrl, returning");
+    return;
+  }
 
-  if (!audio || audio.src !== audioUrl) {
+  // Проверим, существует ли файл вообще
+  fetch(audioUrl, { method: 'HEAD' })
+    .then(res => {
+      console.log("HEAD check:", audioUrl, "status:", res.status, "type:", res.headers.get('content-type'));
+      if (!res.ok) {
+        showToast("❌ Аудио не найдено (404)");
+      }
+    })
+    .catch(err => console.log("HEAD check failed:", err));
+
+  if (!audio || audio.src !== new URL(audioUrl, location.href).href) {
+    console.log("Creating new Audio for:", audioUrl);
     showToast("⏳ Загрузка аудио...");
+
+    if (audio) {
+      audio.pause();
+      audio = null;
+    }
 
     audio = new Audio(audioUrl);
     audio.preload = "auto";
 
-    setupAudioEvents(audio);
+    // Обработка ошибок загрузки
+    audio.addEventListener("error", (e) => {
+      console.error("Audio load error:", e);
+      console.error("Audio error code:", audio.error?.code);
+      console.error("Audio error message:", audio.error?.message);
+      // Коды ошибок: 1=MEDIA_ERR_ABORTED, 2=MEDIA_ERR_NETWORK, 3=MEDIA_ERR_DECODE, 4=MEDIA_ERR_SRC_NOT_SUPPORTED
+      const code = audio.error?.code;
+      let msg = "❌ Ошибка аудио";
+      if (code === 2) msg = "❌ Сетевая ошибка (проверьте интернет)";
+      if (code === 3) msg = "❌ Ошибка декодирования (формат не поддерживается)";
+      if (code === 4) msg = "❌ Файл не найден или формат не поддерживается";
+      
+      const playBtn = document.getElementById("playPauseBtn");
+      const durationEl = document.getElementById("audioDuration");
+      if (playBtn) playBtn.textContent = "❌";
+      if (durationEl) durationEl.textContent = msg;
+      showToast(msg);
+    });
 
     audio.addEventListener("canplaythrough", () => {
+      console.log("Audio canplaythrough, duration:", audio.duration);
       audioCache[audioUrl] = audio;
       const durationEl = document.getElementById("audioDuration");
       const playBtn = document.getElementById("playPauseBtn");
@@ -540,6 +579,11 @@ function togglePlay() {
       audio.play();
     });
 
+    audio.addEventListener("loadedmetadata", () => {
+      console.log("Audio loadedmetadata, duration:", audio.duration);
+    });
+
+    setupAudioEvents(audio);
     audio.load();
     return;
   }
