@@ -2,6 +2,7 @@
 const MAP_SCALE_METERS_PER_PIXEL = 0.26;
 const STEPS_PER_METER = 1.3;
 const CALORIES_PER_STEP = 0.05;
+const MAP_BOUNDS = [[0, 0], [1080, 1920]]; // ← ЗАМЕНИТЬ НА РЕАЛЬНЫЙ РАЗМЕР map.png
 
 // ==================== СОСТОЯНИЕ ====================
 let CONTENT = { points: {}, routes: {} };
@@ -465,9 +466,8 @@ function initMap() {
   }
   
   map = L.map("map", { crs: L.CRS.Simple, zoomControl: false, minZoom: -4, maxZoom: 2, attributionControl: false });
-  const bounds = [[0, 0], [1080, 1920]];
-  L.imageOverlay("map.png", bounds).addTo(map);
-  map.fitBounds(bounds, { padding: [40, 40] });
+  L.imageOverlay("map.png", MAP_BOUNDS).addTo(map);
+map.fitBounds(MAP_BOUNDS, { padding: [40, 40] });
 }
 
 function drawRouteToNext() {
@@ -736,86 +736,30 @@ function createCameraModal() {
   
   const modal = document.createElement("div");
   modal.id = "qrModal";
-  modal.style.cssText = `
-    position: fixed; 
-    inset: 0; 
-    background: rgba(0,0,0,0.95); 
-    z-index: 20000;
-    display: flex; 
-    align-items: center; 
-    justify-content: center;
-    padding: 16px;
-  `;
-  
   modal.innerHTML = `
-    <div style="
-      background: #1e293b;
-      border-radius: 16px;
-      width: 100%;
-      max-width: 360px;
-      overflow: hidden;
-      border: 1px solid #334155;
-    ">
-      <div style="
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 14px 16px;
-        border-bottom: 1px solid #334155;
-      ">
-        <h2 style="font-size: 16px; color: #fff; margin: 0;">📷 Сканирование QR</h2>
-        <button onclick="stopCamera()" style="
-          background: #334155;
-          border: none;
-          color: #94a3b8;
-          width: 32px;
-          height: 32px;
-          border-radius: 50%;
-          font-size: 16px;
-          cursor: pointer;
-        ">✕</button>
-      </div>
-      <p id="cameraStatus" style="
-        text-align: center;
-        color: #94a3b8;
-        font-size: 13px;
-        padding: 10px 16px 0;
-        margin: 0;
-      ">Запуск камеры...</p>
-      <div style="
-        position: relative;
-        width: 260px;
-        height: 260px;
-        margin: 12px auto;
-        border-radius: 12px;
-        overflow: hidden;
-        background: #0f172a;
-      ">
-        <video id="qrVideo" autoplay playsinline muted style="
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-          transform: scaleX(-1);
-        "></video>
-        <canvas id="qrCanvas" style="display:none;"></canvas>
-        <div style="
-          position: absolute;
-          inset: 16px;
-          border: 2px solid rgba(16, 185, 129, 0.3);
-          border-radius: 8px;
-        ">
-          <div style="position:absolute;top:-2px;left:-2px;width:16px;height:16px;border-top:3px solid #10b981;border-left:3px solid #10b981;"></div>
-          <div style="position:absolute;top:-2px;right:-2px;width:16px;height:16px;border-top:3px solid #10b981;border-right:3px solid #10b981;"></div>
-          <div style="position:absolute;bottom:-2px;left:-2px;width:16px;height:16px;border-bottom:3px solid #10b981;border-left:3px solid #10b981;"></div>
-          <div style="position:absolute;bottom:-2px;right:-2px;width:16px;height:16px;border-bottom:3px solid #10b981;border-right:3px solid #10b981;"></div>
+    <div style="position:fixed;inset:0;background:rgba(0,0,0,0.95);z-index:20000;display:flex;align-items:center;justify-content:center;padding:16px;">
+      <div style="background:#1e293b;border-radius:16px;width:100%;max-width:360px;overflow:hidden;border:1px solid #334155;">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid #334155;">
+          <h2 style="font-size:16px;color:#fff;margin:0;">📷 Сканирование QR</h2>
+          <button onclick="stopCamera()" style="background:#334155;border:none;color:#94a3b8;width:32px;height:32px;border-radius:50%;font-size:16px;cursor:pointer;">✕</button>
         </div>
-      </div>
-      <div style="padding: 10px 16px 16px; text-align: center;">
-        <p style="color: #64748b; font-size: 12px; margin: 0;">Наведите камеру на QR-код</p>
+        <p id="cameraStatus" style="text-align:center;color:#94a3b8;font-size:13px;padding:10px 16px 0;margin:0;">Запуск камеры...</p>
+        <div style="position:relative;width:260px;height:260px;margin:12px auto;border-radius:12px;overflow:hidden;background:#0f172a;">
+          <video id="qrVideo" autoplay playsinline muted style="width:100%;height:100%;object-fit:cover;transform:scaleX(-1);"></video>
+          <canvas id="qrCanvas" style="display:none;"></canvas>
+          <div style="position:absolute;inset:16px;border:2px solid rgba(16,185,129,0.3);border-radius:8px;">
+            <div style="position:absolute;top:-2px;left:-2px;width:16px;height:16px;border-top:3px solid #10b981;border-left:3px solid #10b981;"></div>
+            <div style="position:absolute;top:-2px;right:-2px;width:16px;height:16px;border-top:3px solid #10b981;border-right:3px solid #10b981;"></div>
+            <div style="position:absolute;bottom:-2px;left:-2px;width:16px;height:16px;border-bottom:3px solid #10b981;border-left:3px solid #10b981;"></div>
+            <div style="position:absolute;bottom:-2px;right:-2px;width:16px;height:16px;border-bottom:3px solid #10b981;border-right:3px solid #10b981;"></div>
+          </div>
+        </div>
+        <div style="padding:10px 16px 16px;text-align:center;">
+          <p style="color:#64748b;font-size:12px;margin:0;">Наведите камеру на QR-код</p>
+        </div>
       </div>
     </div>
   `;
-  
   document.body.appendChild(modal);
 }
 
@@ -858,8 +802,22 @@ function handleQRResult(url) {
     return;
   }
   
-  const route = CONTENT.routes[currentRoute];
-  const expectedNextId = route.points[currentPointIndex + 1];
+  const route = currentRoute ? CONTENT.routes[currentRoute] : null;
+
+// Если маршрут не выбран — просто открываем точку
+if (!route) {
+  currentPointId = pointId;
+  showGuideFromMap();
+  loadPoint(pointId);
+  showToast(`✅ Точка «${CONTENT.points[pointId]?.title}» открыта!`);
+  return;
+}
+
+const expectedNextId = route.points[currentPointIndex + 1];
+if (pointId !== expectedNextId) {
+  showToast(`⚠️ Это не следующая точка! Следующая: ${CONTENT.points[expectedNextId]?.title || expectedNextId}`);
+  return;
+}
   
   if (pointId !== expectedNextId) {
     showToast(`⚠️ Это не следующая точка! Следующая: ${CONTENT.points[expectedNextId]?.title || expectedNextId}`);
