@@ -1,7 +1,7 @@
 {
   "name": "Аудиогид",
   "short_name": "Аудиогид",
-  "start_url": "/guide.html",
+  "start_url": "./guide.html",
   "display": "standalone",
   "background_color": "#0f172a",
   "theme_color": "#0f172a",

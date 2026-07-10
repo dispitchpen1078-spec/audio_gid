@@ -9,12 +9,11 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <link rel="stylesheet" href="guide-style.css">
-<meta name="theme-color" content="#1e3a8a">
+<meta name="theme-color" content="#0f172a">
 <link rel="manifest" href="manifest.json">
 </head>
 <body>
 <div id="app">
-  <!-- Экран загрузки -->
   <div class="splash-screen" id="splash">
     <div class="splash-content">
       <div class="splash-icon">🏛️</div>
@@ -24,7 +23,6 @@
     </div>
   </div>
 
-  <!-- Экран выбора маршрута -->
   <div class="route-select-screen" id="routeSelect" style="display:none">
     <div class="route-select-content">
       <div class="route-header">
@@ -36,16 +34,13 @@
     </div>
   </div>
 
-  <!-- Главный экран гида -->
   <div class="guide-screen" id="guideScreen" style="display:none">
-    <!-- Шапка -->
     <div class="guide-header">
       <button class="back-btn" id="backBtn" onclick="showMap()">🗺️ Карта</button>
       <div class="route-badge" id="routeBadge">Маршрут</div>
       <div class="point-counter" id="pointCounter">1 / 5</div>
     </div>
 
-    <!-- Карточка точки -->
     <div class="point-card" id="pointCard">
       <div class="point-image-wrap">
         <img id="pointImage" src="" alt="">
@@ -58,7 +53,6 @@
       </div>
     </div>
 
-    <!-- Статистика маршрута -->
     <div class="stats-bar" id="statsBar">
       <div class="stat-item">
         <span class="stat-icon">👣</span>
@@ -77,7 +71,6 @@
       </div>
     </div>
 
-    <!-- Аудиоплеер -->
     <div class="audio-player" id="audioPlayer">
       <div class="audio-progress-wrap">
         <div class="audio-progress-bar" id="audioProgressBar">
@@ -101,7 +94,6 @@
       </div>
     </div>
 
-    <!-- Кнопка следующей точки -->
     <div class="next-point-section" id="nextPointSection">
       <div class="next-point-info" id="nextPointInfo">
         <span>📍 Следующая: </span>
@@ -113,7 +105,6 @@
       </button>
     </div>
 
-    <!-- Кнопка сканирования QR — ВАЖНО: id="qrScanBtn" -->
     <div class="qr-scan-section" id="qrScanSection">
       <div class="qr-divider">
         <span>или</span>
@@ -123,11 +114,10 @@
         <small>следующей точки</small>
       </button>
     </div>
-    
+
     <div style="height: 40px; flex-shrink: 0;"></div>
   </div>
 
-  <!-- Экран карты с маршрутом -->
   <div class="map-screen" id="mapScreen" style="display:none">
     <div class="map-header">
       <button class="map-back-btn" onclick="showGuideFromMap()">← Назад</button>
@@ -144,10 +134,14 @@
     </div>
   </div>
 
-  <!-- Тост -->
   <div class="toast" id="toast"></div>
 </div>
 
 <script src="guide-app.js"></script>
+<script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(err => console.log('SW registration failed:', err));
+}
+</script>
 </body>
 </html>

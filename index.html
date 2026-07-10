@@ -3,291 +3,48 @@
 <head>
 <meta charset="UTF-8">
 <meta http-equiv="refresh" content="2; url=guide.html">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Карта экскурсии</title>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0f172a">
+<title>Аудиогид</title>
 <style>
-*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#0f172a;color:#e2e8f0;overflow:hidden;height:100vh}
-.app-header{position:fixed;top:0;left:0;right:0;height:56px;background:#1e293b;border-bottom:1px solid #334155;display:flex;align-items:center;justify-content:space-between;padding:0 16px;z-index:3000}
-.app-header h1{font-size:17px;font-weight:600}
-.route-selector{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding:4px}
-.route-selector::-webkit-scrollbar{display:none}
-.route-chip{background:#334155;border:none;color:#94a3b8;padding:6px 14px;border-radius:20px;font-size:13px;cursor:pointer;white-space:nowrap;transition:all .2s}
-.route-chip:hover{background:#475569}
-.route-chip.active{background:#3b82f6;color:#fff}
-#map{position:fixed;top:56px;left:0;right:0;bottom:0;z-index:1000}
-.bottom-sheet{position:fixed;left:0;right:0;bottom:0;background:#1e293b;border-radius:20px 20px 0 0;padding:20px;z-index:2000;transform:translateY(calc(100% - 60px));transition:transform .3s cubic-bezier(.4,0,.2,1);max-height:50vh;overflow-y:auto}
-.bottom-sheet.open{transform:translateY(0)}
-.sheet-handle{width:40px;height:4px;background:#475569;border-radius:2px;margin:0 auto 16px;cursor:pointer}
-.point-card-header{display:flex;gap:16px;margin-bottom:16px}
-.point-image{width:80px;height:80px;border-radius:12px;object-fit:cover;background:#334155;flex-shrink:0}
-.point-meta{flex:1}
-.point-meta h3{font-size:18px;margin-bottom:4px;color:#fff}
-.point-meta p{font-size:13px;color:#94a3b8;line-height:1.4}
-.point-actions{display:flex;gap:10px}
-.point-actions a,.point-actions button{flex:1;padding:12px;border-radius:12px;font-size:14px;font-weight:600;text-align:center;text-decoration:none;cursor:pointer;border:none}
-.btn-primary{background:#3b82f6;color:#fff}
-.btn-secondary{background:#334155;color:#e2e8f0}
-.current-badge{display:inline-flex;align-items:center;gap:6px;background:#ef4444;color:#fff;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;margin-bottom:8px}
-.current-badge::before{content:"";width:8px;height:8px;background:#fff;border-radius:50%;animation:pulse-dot 2s infinite}
-@keyframes pulse-dot{0%,100%{opacity:1}50%{opacity:.3}}
-.visited-badge{display:inline-flex;align-items:center;gap:6px;background:#10b981;color:#fff;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;margin-bottom:8px}
-.next-badge{display:inline-flex;align-items:center;gap:6px;background:#f59e0b;color:#fff;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;margin-bottom:8px}
-.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(100px);background:#1e293b;color:#fff;padding:14px 28px;border-radius:14px;font-size:14px;font-weight:500;z-index:6000;opacity:0;transition:all .3s;pointer-events:none;border:1px solid #334155;box-shadow:0 10px 40px rgba(0,0,0,.4)}
-.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-/* Маркеры */
-.point-marker{background:#3b82f6;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;font-size:18px;border:2px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.3);cursor:pointer;transition:transform .2s}
-.point-marker:hover{transform:scale(1.1)}
-.point-marker.current{background:#ef4444;border-width:3px;animation:pulse-marker 2s infinite}
-@keyframes pulse-marker{0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,.4),0 2px 8px rgba(0,0,0,.3)}50%{box-shadow:0 0 0 12px rgba(239,68,68,0),0 2px 8px rgba(0,0,0,.3)}}
-.point-marker.visited{background:#64748b;border-color:#94a3b8;opacity:.6}
-.point-marker.next{background:#10b981}
-.point-marker-label{position:absolute;top:-20px;left:50%;transform:translateX(-50%);background:#1e293b;color:#fff;padding:2px 8px;border-radius:6px;font-size:11px;white-space:nowrap;font-weight:600;border:1px solid #334155}
-/* Легенда */
-.map-legend{position:fixed;bottom:70px;right:12px;background:rgba(30,41,59,.9);padding:10px 14px;border-radius:12px;z-index:1500;font-size:12px;border:1px solid #334155}
-.legend-item{display:flex;align-items:center;gap:8px;margin-bottom:6px}
-.legend-item:last-child{margin-bottom:0}
-.legend-dot{width:10px;height:10px;border-radius:50%}
-.legend-dot.current{background:#ef4444}
-.legend-dot.next{background:#10b981}
-.legend-dot.visited{background:#64748b}
-.legend-dot.regular{background:#3b82f6}
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: #0f172a;
+  color: #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  margin: 0;
+  text-align: center;
+}
+h1 { font-size: 24px; margin-bottom: 8px; }
+p { color: #94a3b8; margin-bottom: 20px; }
+a {
+  color: #3b82f6;
+  text-decoration: none;
+  padding: 12px 24px;
+  background: #1e293b;
+  border-radius: 12px;
+  border: 1px solid #334155;
+}
+.spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid #334155;
+  border-top-color: #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 16px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
 </style>
 </head>
 <body>
-<div class="app-header">
-<h1>🗺️ Карта экскурсии</h1>
-<div class="route-selector" id="routeSelector"></div>
-</div>
-<div id="map"></div>
-
-<div class="bottom-sheet" id="bottomSheet">
-<div class="sheet-handle" onclick="toggleSheet()"></div>
-<div id="sheetContent">
-<div style="text-align:center;color:#64748b;padding:20px;">
-<p>Загрузка... <a href="guide.html">Перейти вручную</a></p>
-<p style="font-size:40px;margin-bottom:12px;">👆</p>
-<p>Нажмите на точку на карте</p>
-</div>
-</div>
-</div>
-
-<div class="map-legend" id="mapLegend">
-<div class="legend-item"><div class="legend-dot current"></div>Вы здесь</div>
-<div class="legend-item"><div class="legend-dot next"></div>Следующая</div>
-<div class="legend-item"><div class="legend-dot visited"></div>Посещено</div>
-<div class="legend-item"><div class="legend-dot regular"></div>Точка</div>
-</div>
-
-<div class="toast" id="toast"></div>
-
-<script>
-let CONTENT = { points: {}, routes: {} };
-let map, markers = {}, routeLayer = null;
-let currentRoute = null;
-let currentPointId = null;
-let visitedPoints = new Set();
-
-async function init() {
-await loadData();
-initMap();
-renderRouteSelector();
-loadStateFromURL();
-}
-
-async function loadData() {
-try {
-const res = await fetch("content.json");
-CONTENT = await res.json();
-} catch(e) {
-CONTENT = { points: {}, routes: {} };
-}
-const saved = localStorage.getItem("visitedPoints");
-if(saved) visitedPoints = new Set(JSON.parse(saved));
-const savedRoute = localStorage.getItem("currentRoute");
-if(savedRoute && CONTENT.routes[savedRoute]) currentRoute = savedRoute;
-const savedPoint = localStorage.getItem("currentPointId");
-if(savedPoint && CONTENT.points[savedPoint]) currentPointId = savedPoint;
-}
-
-function loadStateFromURL() {
-const params = new URLSearchParams(window.location.search);
-const pointId = params.get("point");
-const routeId = params.get("route");
-if(pointId && CONTENT.points[pointId]) {
-currentPointId = pointId;
-visitedPoints.add(pointId);
-localStorage.setItem("visitedPoints", JSON.stringify([...visitedPoints]));
-localStorage.setItem("currentPointId", pointId);
-}
-if(routeId && CONTENT.routes[routeId]) {
-currentRoute = routeId;
-localStorage.setItem("currentRoute", routeId);
-}
-if(currentRoute) {
-selectRoute(currentRoute, false);
-} else {
-initMarkers();
-}
-}
-
-function initMap() {
-map = L.map("map", { crs: L.CRS.Simple, zoomControl: false, minZoom: -4, maxZoom: 2, attributionControl: false });
-const bounds = [[0,0],[1080,1920]];
-L.imageOverlay("map.png", bounds).addTo(map);
-map.fitBounds(bounds, { padding: [20,20] });
-L.control.zoom({ position: "bottomright" }).addTo(map);
-}
-
-function renderRouteSelector() {
-const container = document.getElementById("routeSelector");
-container.innerHTML = `<button class="route-chip ${!currentRoute?'active':''}" onclick="selectRoute(null)">Все точки</button>`;
-Object.entries(CONTENT.routes || {}).forEach(([id, route]) => {
-container.innerHTML += `<button class="route-chip ${currentRoute===id?'active':''}" onclick="selectRoute('${id}')">${route.name}</button>`;
-});
-}
-
-function selectRoute(routeId, save = true) {
-currentRoute = routeId;
-if(save) {
-localStorage.setItem("currentRoute", routeId || "");
-if(routeId) {
-const route = CONTENT.routes[routeId];
-if(route && route.points.length > 0 && !currentPointId) {
-currentPointId = route.points[0];
-localStorage.setItem("currentPointId", currentPointId);
-}
-}
-}
-renderRouteSelector();
-if(routeLayer) { map.removeLayer(routeLayer); routeLayer = null; }
-if(routeId) {
-drawRoute(routeId);
-} else {
-initMarkers();
-}
-}
-
-function drawRoute(routeId) {
-const route = CONTENT.routes[routeId];
-if(!route || !route.points) return;
-const latlngs = [];
-for(let i = 0; i < route.points.length; i++) {
-const pt = CONTENT.points[route.points[i]];
-if(!pt) continue;
-latlngs.push([pt.y, pt.x]);
-if(i < route.points.length - 1) {
-const wps = route.waypoints?.[i] || [];
-wps.forEach(wp => latlngs.push([wp.y, wp.x]));
-}
-}
-routeLayer = L.polyline(latlngs, { color: "#3b82f6", weight: 5, opacity: 0.8 }).addTo(map);
-addArrows(latlngs);
-initMarkers();
-if(latlngs.length > 1) map.fitBounds(latlngs, { padding: [60,60] });
-}
-
-function addArrows(latlngs) {
-for(let i = 0; i < latlngs.length - 1; i++) {
-const from = latlngs[i], to = latlngs[i+1];
-const dist = Math.sqrt((to[0]-from[0])**2 + (to[1]-from[1])**2);
-const steps = Math.max(1, Math.floor(dist / 200));
-for(let s = 1; s <= steps; s++) {
-const t = s / (steps + 1);
-const pos = [from[0] + (to[0]-from[0])*t, from[1] + (to[1]-from[1])*t];
-const angle = Math.atan2(to[1]-from[1], to[0]-from[0]) * 180 / Math.PI;
-const arrow = L.divIcon({
-html: `<div style="width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-bottom:10px solid #3b82f6;transform:rotate(${angle-90}deg);"></div>`,
-iconSize: [12,12], iconAnchor: [6,6]
-});
-L.marker(pos, { icon: arrow, zIndexOffset: 50 }).addTo(map);
-}
-}
-}
-
-function initMarkers() {
-Object.values(markers).forEach(m => map.removeLayer(m));
-markers = {};
-const pointsToShow = currentRoute
-? CONTENT.routes[currentRoute].points
-: Object.keys(CONTENT.points || {});
-pointsToShow.forEach((pid, idx) => {
-const pt = CONTENT.points[pid];
-if(!pt) return;
-let className = "point-marker";
-let label = "";
-if(pid === currentPointId) {
-className += " current";
-label = `<div class="point-marker-label">Вы здесь</div>`;
-} else if(visitedPoints.has(pid)) {
-className += " visited";
-} else if(currentRoute && isNextPoint(pid)) {
-className += " next";
-label = `<div class="point-marker-label">Следующая</div>`;
-}
-const icon = L.divIcon({
-className,
-html: `${label}${pt.icon || "📍"}`,
-iconSize: [36,36],
-iconAnchor: [18,18]
-});
-const marker = L.marker([pt.y, pt.x], { icon }).addTo(map);
-marker.on("click", () => showPointCard(pid, idx + 1));
-markers[pid] = marker;
-});
-}
-
-function isNextPoint(pid) {
-if(!currentRoute) return false;
-const route = CONTENT.routes[currentRoute];
-if(!route) return false;
-const currentIdx = route.points.indexOf(currentPointId);
-if(currentIdx < 0) return false;
-return route.points[currentIdx + 1] === pid;
-}
-
-function showPointCard(pid, number) {
-const pt = CONTENT.points[pid];
-if(!pt) return;
-const isCurrent = pid === currentPointId;
-const isVisited = visitedPoints.has(pid);
-const isNext = isNextPoint(pid);
-let badge = "";
-if(isCurrent) badge = `<div class="current-badge">📍 Вы сейчас здесь</div>`;
-else if(isVisited) badge = `<div class="visited-badge">✅ Уже посещено</div>`;
-else if(isNext) badge = `<div class="next-badge">➡️ Следующая точка</div>`;
-const sheet = document.getElementById("bottomSheet");
-document.getElementById("sheetContent").innerHTML = `
-${badge}
-<div class="point-card-header">
-<img class="point-image" src="${pt.image || ''}" alt="" onerror="this.style.display='none'">
-<div class="point-meta">
-<h3>${pt.title || "Без названия"}</h3>
-<p>${pt.description ? pt.description.substring(0, 120) + "..." : "Нет описания"}</p>
-</div>
-</div>
-<div class="point-actions">
-${isCurrent || isVisited ? `<a href="guide.html?point=${pid}${currentRoute ? '&route=' + currentRoute : ''}" class="btn-primary">🎧 Аудиогид</a>` : `<button class="btn-secondary" onclick="showToast('Отсканируйте QR-код у этой точки, чтобы открыть аудиогид')">🔒 QR нужен</button>`}
-<a href="guide.html?point=${pid}${currentRoute ? '&route=' + currentRoute : ''}" class="btn-secondary">ℹ️ Подробнее</a>
-</div>
-`;
-sheet.classList.add("open");
-}
-
-function toggleSheet() {
-document.getElementById("bottomSheet").classList.toggle("open");
-}
-
-function showToast(msg) {
-const t = document.getElementById("toast");
-t.textContent = msg;
-t.classList.add("show");
-setTimeout(() => t.classList.remove("show"), 3000);
-}
-
-init();
-</script>
+<div class="spinner"></div>
+<h1>Аудиогид</h1>
+<p>Загрузка...</p>
+<a href="guide.html">Перейти вручную</a>
 </body>
 </html>
