@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QR-коды точек</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f8fafc;padding:20px}
+.container{max-width:1200px;margin:0 auto}
+h1{text-align:center;color:#1e3a8a;margin-bottom:8px}
+.subtitle{text-align:center;color:#64748b;margin-bottom:10px;font-size:14px}
+.server-url-box{background:#d1fae5;border:1px solid #10b981;border-radius:12px;padding:16px;margin-bottom:20px;text-align:center}
+.server-url-box h3{color:#065f46;margin-bottom:8px;font-size:16px}
+.server-url-box p{color:#047857;font-size:13px;margin-bottom:10px}
+.server-url-box input{width:100%;padding:10px;border:1px solid #10b981;border-radius:8px;font-size:14px;text-align:center;margin-bottom:10px;background:#fff}
+.server-url-box .example{color:#059669;font-size:12px}
+.print-btn{display:block;margin:0 auto 30px;padding:12px 24px;background:#1e88e5;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer}
+.print-btn:hover{background:#1976d2}
+.qr-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:20px}
+.qr-card{background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:20px;text-align:center;page-break-inside:avoid}
+.qr-icon{font-size:40px;margin-bottom:12px}
+.qr-card h3{font-size:15px;color:#1e293b;margin-bottom:4px}
+.qr-card p{font-size:12px;color:#64748b;margin-bottom:12px}
+.qr-wrap{display:flex;justify-content:center;margin-bottom:12px;min-height:150px;align-items:center}
+.qr-url{font-size:10px;color:#94a3b8;word-break:break-all;background:#f1f5f9;padding:6px;border-radius:6px}
+.error-box{background:#fee2e2;border:1px solid #ef4444;border-radius:12px;padding:20px;text-align:center;color:#991b1b}
+.error-box h3{margin-bottom:8px}
+@media print{
+body{background:#fff;padding:10px}
+.print-btn,.server-url-box{display:none}
+.qr-card{box-shadow:none;border:1px solid #cbd5e1}
+}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>🔗 QR-коды точек экскурсии</h1>
+<p class="subtitle">Проверьте URL ниже и распечатайте QR-коды</p>
+
+<div class="server-url-box">
+<h3>✅ Сервер запущен!</h3>
+<p>Ваш URL для QR-кодов (HTTPS — работает на iPhone):</p>
+<input type="text" id="serverUrl" value="https://fruity-moments-invite.loca.lt" readonly>
+<p class="example">Если URL изменился — обновите и нажмите "Обновить QR-коды"</p>
+<button onclick="regenerateQRs()" style="padding:8px 20px;background:#10b981;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600">🔄 Обновить QR-коды</button>
+</div>
+
+<button class="print-btn" onclick="window.print()">🖨️ Распечатать все QR-коды</button>
+<div class="qr-grid" id="qrGrid"></div>
+</div>
+
+<script>
+let contentData = null;
+
+function getBaseUrl() {
+  const input = document.getElementById("serverUrl").value.trim();
+  if (!input) {
+    alert("Введите URL сервера!");
+    return null;
+  }
+  return input.replace(/\/$/, "") + "/guide.html";
+}
+
+async function loadContent() {
+  try {
+    const res = await fetch("content.json");
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    contentData = await res.json();
+    return true;
+  } catch (e) {
+    document.getElementById("qrGrid").innerHTML = `
+      <div class="error-box" style="grid-column:1/-1;">
+        <h3>❌ Не удалось загрузить content.json</h3>
+        <p>Убедитесь, что сервер запущен и вы открыли страницу через http://localhost:3000/qr-codes.html</p>
+      </div>
+    `;
+    return false;
+  }
+}
+
+function generateQRs() {
+  if (!contentData || !contentData.points) {
+    document.getElementById("qrGrid").innerHTML = `<div class="error-box" style="grid-column:1/-1;"><h3>Нет данных о точках</h3></div>`;
+    return;
+  }
+
+  const baseUrl = getBaseUrl();
+  if (!baseUrl) return;
+
+  const grid = document.getElementById("qrGrid");
+  grid.innerHTML = "";
+
+  Object.entries(contentData.points).forEach(([id, pt]) => {
+    const url = `${baseUrl}?point=${id}`;
+    const card = document.createElement("div");
+    card.className = "qr-card";
+    card.innerHTML = `
+      <div class="qr-icon">${pt.icon || "📍"}</div>
+      <h3>${pt.title || id}</h3>
+      <p>${pt.description ? pt.description.substring(0, 60) + "..." : "Точка экскурсии"}</p>
+      <div class="qr-wrap" id="qr-${id}"></div>
+      <div class="qr-url">${url}</div>
+    `;
+    grid.appendChild(card);
+
+    setTimeout(() => {
+      new QRCode(document.getElementById(`qr-${id}`), {
+        text: url,
+        width: 150,
+        height: 150,
+        colorDark: "#1e293b",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.M
+      });
+    }, 50);
+  });
+}
+
+async function regenerateQRs() {
+  if (!contentData) {
+    const ok = await loadContent();
+    if (!ok) return;
+  }
+  generateQRs();
+}
+
+document.addEventListener("DOMContentLoaded", async () => {
+  const ok = await loadContent();
+  if (ok) generateQRs();
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,1060 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Админка — Экскурсия</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f1f5f9;color:#1e293b;overflow:hidden}
+.admin-header{position:fixed;top:0;left:0;right:0;height:56px;background:#1e3a8a;color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 20px;z-index:3000}
+.admin-header h1{font-size:18px}
+.admin-header .logout-btn{background:rgba(255,255,255,0.2);border:none;color:#fff;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:14px}
+.admin-layout{display:flex;height:100vh;padding-top:56px}
+.admin-sidebar{width:380px;background:#fff;border-right:1px solid #e2e8f0;overflow-y:auto;z-index:2000;display:flex;flex-direction:column}
+.admin-tabs{display:flex;gap:4px;padding:12px;border-bottom:1px solid #e2e8f0;flex-wrap:wrap}
+.a-tab{flex:1;min-width:70px;padding:8px 6px;border:none;border-radius:8px;background:#f1f5f9;cursor:pointer;font-size:13px;font-weight:500;color:#64748b;transition:all .2s;white-space:nowrap}
+.a-tab:hover{background:#e2e8f0}
+.a-tab.active{background:#1e88e5;color:#fff}
+#a-tab-add{background:rgba(30,136,229,0.1);color:#1e88e5;border:1px dashed #1e88e5}
+#a-tab-add:hover{background:rgba(30,136,229,0.2)}
+#a-tab-add.cancel{background:#ef4444;color:#fff;border-style:solid}
+#a-tab-route{background:rgba(16,185,129,0.1);color:#10b981;border:1px dashed #10b981}
+#a-tab-route:hover{background:rgba(16,185,129,0.2)}
+#a-tab-route.active-route{background:#10b981;color:#fff;border-style:solid}
+.tab-content{display:none;padding:16px;flex:1;overflow-y:auto}
+.tab-content.active{display:block}
+.admin-map{flex:1;position:relative;z-index:1000}
+#admin-map{width:100%;height:100%}
+.form-group{margin-bottom:14px}
+.form-group label{display:block;font-size:13px;font-weight:500;color:#64748b;margin-bottom:6px}
+.form-group input,.form-group textarea,.form-group select{width:100%;padding:10px 12px;border:1px solid #e2e8f0;border-radius:10px;font-size:14px;outline:none;transition:border .2s}
+.form-group input:focus,.form-group textarea:focus,.form-group select:focus{border-color:#1e88e5}
+.form-group textarea{min-height:80px;resize:vertical}
+.main-btn{width:100%;padding:12px;background:#1e88e5;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s}
+.main-btn:hover{background:#1976d2}
+.main-btn.danger{background:#ef4444}
+.main-btn.danger:hover{background:#dc2626}
+.main-btn.secondary{background:#f1f5f9;color:#475569}
+.main-btn.secondary:hover{background:#e2e8f0}
+.main-btn.success{background:#10b981;color:#fff}
+.main-btn.success:hover{background:#059669}
+.loc-editor{padding:16px;border-bottom:1px solid #e2e8f0}
+.loc-editor h3{margin-bottom:12px;font-size:16px;color:#1e3a8a}
+.event-item{padding:12px;background:#f8fafc;border-radius:10px;margin-bottom:8px;border:1px solid #e2e8f0}
+.event-item h4{margin:0 0 4px;font-size:14px}
+.event-item p{margin:0;font-size:12px;color:#64748b}
+.event-actions{display:flex;gap:6px;margin-top:8px}
+.event-actions button{padding:4px 10px;border:none;border-radius:6px;font-size:12px;cursor:pointer}
+.event-actions .edit-btn{background:#fef3c7;color:#92400e}
+.event-actions .delete-btn{background:#fee2e2;color:#991b1b}
+.event-list{max-height:300px;overflow-y:auto}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(100px);background:#1e293b;color:#fff;padding:12px 24px;border-radius:12px;font-size:14px;font-weight:500;z-index:6000;opacity:0;transition:all .3s;pointer-events:none}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.login-overlay{position:fixed;inset:0;background:#1e3a8a;z-index:10000;display:flex;align-items:center;justify-content:center}
+.login-box{background:#fff;padding:40px;border-radius:20px;width:90%;max-width:360px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.3)}
+.login-box h2{margin-bottom:8px;color:#1e3a8a}
+.login-box p{color:#64748b;font-size:14px;margin-bottom:24px}
+.login-box input{width:100%;padding:14px;border:2px solid #e2e8f0;border-radius:12px;font-size:16px;text-align:center;margin-bottom:16px;outline:none}
+.login-box input:focus{border-color:#1e88e5}
+.route-card{background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:14px;margin-bottom:12px}
+.route-card h4{margin:0 0 8px;font-size:15px}
+.route-points{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0;min-height:40px;padding:8px;background:#fff;border-radius:8px;border:1px dashed #cbd5e1}
+.route-point-tag{background:#1e88e5;color:#fff;padding:4px 10px;border-radius:6px;font-size:12px;display:flex;align-items:center;gap:4px;cursor:grab}
+.route-point-tag .remove{cursor:pointer;font-weight:bold;opacity:.7}
+.route-point-tag .remove:hover{opacity:1}
+.route-actions{display:flex;gap:8px;margin-top:10px}
+.route-actions button{flex:1;padding:8px;border:none;border-radius:8px;font-size:13px;cursor:pointer}
+.route-preview-btn{background:#dbeafe;color:#1e40af}
+.route-edit-path-btn{background:#d1fae5;color:#065f46}
+.route-delete-btn{background:#fee2e2;color:#991b1b}
+.add-route-form{padding:16px;background:#f8fafc;border-radius:12px;margin-bottom:16px}
+.add-route-form h4{margin-bottom:12px}
+.route-select{width:100%;padding:10px;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:8px;font-size:14px}
+.admin-marker{background:#fff;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;font-size:18px;border:2px solid #1e88e5;box-shadow:0 2px 6px rgba(0,0,0,0.2);cursor:pointer;transition:transform 0.2s}
+.admin-marker:hover{transform:scale(1.1)}
+.admin-marker.selected{border-color:#ef4444;border-width:3px;transform:scale(1.2)}
+.waypoint-marker{background:#10b981;border-radius:50%;width:20px;height:20px;border:2px solid #fff;box-shadow:0 2px 4px rgba(0,0,0,0.3);cursor:move}
+.waypoint-marker:hover{transform:scale(1.2)}
+.qr-list{padding:12px}
+.qr-item{padding:10px;background:#f8fafc;border-radius:8px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center}
+.qr-item .url{font-size:12px;color:#64748b;word-break:break-all;flex:1;margin-right:8px}
+.qr-item button{padding:6px 12px;background:#1e88e5;color:#fff;border:none;border-radius:6px;font-size:12px;cursor:pointer}
+.analytics-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:16px}
+.analytics-card{background:#f8fafc;border-radius:12px;padding:16px;text-align:center;border:1px solid #e2e8f0}
+.analytics-card .number{font-size:28px;font-weight:700;color:#1e88e5}
+.analytics-card .label{font-size:12px;color:#64748b;margin-top:4px}
+.path-editor-info{background:#ecfdf5;border:1px solid #10b981;border-radius:10px;padding:12px;margin-bottom:16px}
+.path-editor-info h4{color:#065f46;margin-bottom:6px}
+.path-editor-info p{color:#047857;font-size:13px;line-height:1.5}
+.path-editor-info .tip{background:#fff;border-radius:6px;padding:8px;margin-top:8px;font-size:12px;color:#374151}
+.path-actions{display:flex;gap:8px;margin-top:12px}
+.path-actions button{flex:1}
+.path-segment-info{padding:8px;background:#f0fdf4;border-radius:6px;margin-bottom:8px;font-size:13px;color:#065f46}
+</style>
+</head>
+<body>
+<div class="login-overlay" id="loginOverlay">
+<div class="login-box">
+<h2>🔐 Админ-панель</h2>
+<p>Введите пароль для доступа</p>
+<input type="password" id="adminPass" placeholder="Пароль" onkeydown="if(event.key==='Enter')doLogin()">
+<button class="main-btn" onclick="doLogin()">Войти</button>
+</div>
+</div>
+
+<div class="admin-header">
+<h1>🗺️ Управление экскурсией</h1>
+<button class="logout-btn" onclick="logout()">Выйти</button>
+</div>
+
+<div class="admin-layout">
+<div class="admin-sidebar">
+<div class="admin-tabs">
+<button class="a-tab active" onclick="switchAdminTab('schedule')">📅 Точки</button>
+<button class="a-tab" onclick="switchAdminTab('routes')">🗺️ Маршруты</button>
+<button class="a-tab" onclick="switchAdminTab('analytics')">📊 Аналитика</button>
+<button class="a-tab" onclick="switchAdminTab('settings')">🔗 QR</button>
+<button class="a-tab" id="a-tab-add" onclick="toggleAddPoint()">➕ Точка</button>
+<button class="a-tab" id="a-tab-route" onclick="toggleRouteEdit()" style="display:none">✏️ Путь</button>
+</div>
+
+<div class="tab-content active" id="tab-schedule">
+<div id="loc-editor" class="loc-editor" style="display:none">
+<h3>✏️ Редактирование локации</h3>
+<div class="form-group">
+<label>Название точки</label>
+<input type="text" id="loc-name" placeholder="Название">
+</div>
+<div class="form-group">
+<label>Описание для гостей</label>
+<textarea id="loc-desc" placeholder="Описание..."></textarea>
+</div>
+<div class="form-group">
+<label>Фото для карточки</label>
+<input type="text" id="loc-photo-url" placeholder="/images/point.jpg">
+</div>
+<div class="form-group">
+<label>Аудиогид</label>
+<input type="text" id="loc-audio-url" placeholder="/audio/point.mp3">
+</div>
+<div class="form-group">
+<label>Иконка (эмодзи)</label>
+<input type="text" id="loc-icon" placeholder="📍" maxlength="4">
+</div>
+<button class="main-btn" onclick="saveLocData()">💾 Сохранить локацию</button>
+
+<h4 style="margin-top:20px;margin-bottom:10px;font-size:14px">📅 События</h4>
+<div id="event-list" class="event-list"></div>
+<div id="event-form" style="display:none;margin-top:12px">
+<div class="form-group">
+<label>Название события</label>
+<input type="text" id="event-title" placeholder="Название">
+</div>
+<div class="form-group">
+<label>Описание</label>
+<textarea id="event-desc" placeholder="Описание..."></textarea>
+</div>
+<div style="display:flex;gap:10px">
+<div class="form-group" style="flex:1">
+<label>Начало</label>
+<input type="time" id="event-start">
+</div>
+<div class="form-group" style="flex:1">
+<label>Окончание</label>
+<input type="time" id="event-end">
+</div>
+</div>
+<button class="main-btn" onclick="saveEvent()">💾 Сохранить событие</button>
+<button class="main-btn secondary" style="margin-top:8px" onclick="cancelEventEdit()">Отмена</button>
+</div>
+<button class="main-btn secondary" style="margin-top:12px" onclick="showEventForm()">➕ Добавить событие</button>
+</div>
+<div id="placeholder-msg" style="padding:40px 20px;text-align:center;color:#94a3b8">
+<p style="font-size:48px;margin-bottom:16px">👆</p>
+<p>Кликните на маркер карты, чтобы редактировать точку</p>
+<p style="margin-top:12px;font-size:13px">Или нажмите «➕ Точка» и кликните на карте, чтобы добавить новую</p>
+</div>
+</div>
+
+<div class="tab-content" id="tab-routes">
+<div class="add-route-form">
+<h4>➕ Новый маршрут</h4>
+<div class="form-group">
+<label>ID маршрута (латиницей)</label>
+<input type="text" id="new-route-id" placeholder="short, long, evening...">
+</div>
+<div class="form-group">
+<label>Название</label>
+<input type="text" id="new-route-name" placeholder="🌿 Короткий маршрут">
+</div>
+<div class="form-group">
+<label>Описание</label>
+<input type="text" id="new-route-desc" placeholder="30 минут, 3 точки">
+</div>
+<button class="main-btn" onclick="createRoute()">Создать маршрут</button>
+</div>
+<div id="routes-list"></div>
+</div>
+
+<div class="tab-content" id="tab-analytics">
+<div class="analytics-grid">
+<div class="analytics-card"><div class="number" id="stat-points">0</div><div class="label">Точек</div></div>
+<div class="analytics-card"><div class="number" id="stat-routes">0</div><div class="label">Маршрутов</div></div>
+<div class="analytics-card"><div class="number" id="stat-events">0</div><div class="label">Событий</div></div>
+<div class="analytics-card"><div class="number" id="stat-short">0</div><div class="label">Точек (короткий)</div></div>
+</div>
+</div>
+
+<div class="tab-content" id="tab-settings">
+<div class="qr-list" id="qr-list">
+<h4 style="margin-bottom:12px">🔗 QR-ссылки точек</h4>
+<p style="color:#94a3b8;font-size:13px;margin-bottom:12px">Скопируйте ссылку и сгенерируйте QR через любой сервис</p>
+<div id="qr-items"></div>
+</div>
+</div>
+</div>
+
+<div class="admin-map">
+<div id="admin-map"></div>
+</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const ADMIN_PASS = "1234";
+let LOCATIONS = [];
+let CONTENT = { points: {}, routes: {} };
+let events = [];
+let currentLocId = null;
+let editingEventId = null;
+let map, markerLayers = {};
+let routePreviewLayer = null;
+let editingRouteId = null;
+let isAddingPoint = false;
+let tempNewMarker = null;
+let isEditingRoutePath = false;
+let currentRoutePath = null;
+let waypoints = [];
+let waypointMarkers = [];
+let pathLine = null;
+
+function doLogin() {
+    const pass = document.getElementById("adminPass").value;
+    if (pass === ADMIN_PASS) {
+        document.getElementById("loginOverlay").style.display = "none";
+        initAdmin();
+    } else {
+        showToast("❌ Неверный пароль");
+    }
+}
+
+function logout() {
+    document.getElementById("loginOverlay").style.display = "flex";
+    document.getElementById("adminPass").value = "";
+}
+
+async function initAdmin() {
+    await loadData();
+    initMap();
+    renderRoutes();
+    renderQRs();
+    updateAnalytics();
+}
+
+async function loadData() {
+    try {
+        const contentRes = await fetch("content.json");
+        CONTENT = await contentRes.json();
+    } catch (e) {
+        CONTENT = { points: {}, routes: {} };
+    }
+    try {
+        const locRes = await fetch("locations.json");
+        LOCATIONS = await locRes.json();
+    } catch (e) {
+        LOCATIONS = [];
+    }
+    try {
+        const schedRes = await fetch("schedule.json");
+        events = await schedRes.json();
+    } catch (e) {
+        events = [];
+    }
+    Object.entries(CONTENT.points || {}).forEach(([id, point]) => {
+        let loc = LOCATIONS.find(l => l.id === id);
+        if (!loc) {
+            loc = {
+                id: id,
+                name: point.title || id,
+                y: point.y || 500,
+                x: point.x || 500,
+                icon: point.icon || "📍",
+                category: "other",
+                photo: point.image || "",
+                audio: point.audio || ""
+            };
+            LOCATIONS.push(loc);
+        }
+    });
+}
+
+function initMap() {
+    map = L.map("admin-map", { crs: L.CRS.Simple, zoomControl: true, minZoom: -4, maxZoom: 2, attributionControl: false });
+    const bounds = [[0, 0], [1080, 1920]];
+    L.imageOverlay("map.png", bounds).addTo(map);
+    map.fitBounds(bounds, { padding: [0, 0] });
+
+    map.on("click", function(e) {
+        if (isEditingRoutePath) {
+            addWaypoint(e.latlng.lat, e.latlng.lng);
+            return;
+        }
+        if (!isAddingPoint) return;
+        const lat = Math.round(e.latlng.lat);
+        const lng = Math.round(e.latlng.lng);
+        if (tempNewMarker) map.removeLayer(tempNewMarker);
+        const tempIcon = L.divIcon({ className: "admin-marker", html: "📍", iconSize: [36, 36], iconAnchor: [18, 18] });
+        tempNewMarker = L.marker([lat, lng], { icon: tempIcon }).addTo(map);
+        showAddPointForm(lat, lng);
+    });
+
+    initMarkers();
+    window.addEventListener("resize", () => map.invalidateSize());
+}
+
+function initMarkers() {
+    Object.values(markerLayers).forEach(m => map.removeLayer(m));
+    markerLayers = {};
+    LOCATIONS.forEach(loc => {
+        const icon = L.divIcon({ className: "admin-marker", html: loc.icon || "📍", iconSize: [36, 36], iconAnchor: [18, 18] });
+        const marker = L.marker([loc.y, loc.x], { icon, draggable: true }).addTo(map);
+        marker.on("click", () => selectLoc(loc.id));
+        marker.on("dragend", function(e) {
+            const pos = e.target.getLatLng();
+            loc.y = Math.round(pos.lat);
+            loc.x = Math.round(pos.lng);
+            if (CONTENT.points[loc.id]) {
+                CONTENT.points[loc.id].y = loc.y;
+                CONTENT.points[loc.id].x = loc.x;
+            }
+            saveLocDataToServer();
+            saveContent();
+            showToast(`📍 ${loc.name}: ${loc.x}, ${loc.y}`);
+            if (isEditingRoutePath && currentRoutePath) {
+                rebuildPathFromWaypoints();
+            }
+        });
+        markerLayers[loc.id] = marker;
+    });
+}
+
+function toggleAddPoint() {
+    const btn = document.getElementById("a-tab-add");
+    if (isAddingPoint) {
+        cancelAddingPoint();
+    } else {
+        isAddingPoint = true;
+        btn.innerText = "❌ Отмена";
+        btn.classList.add("cancel");
+        showToast("Кликните на карте, чтобы поставить точку");
+        document.getElementById("admin-map").style.cursor = "crosshair";
+    }
+}
+
+function cancelAddingPoint() {
+    isAddingPoint = false;
+    const btn = document.getElementById("a-tab-add");
+    btn.innerText = "➕ Точка";
+    btn.classList.remove("cancel");
+    document.getElementById("admin-map").style.cursor = "";
+    if (tempNewMarker) {
+        map.removeLayer(tempNewMarker);
+        tempNewMarker = null;
+    }
+}
+
+function showAddPointForm(y, x) {
+    switchAdminTab("schedule");
+    document.querySelectorAll(".a-tab").forEach(t => t.classList.remove("active"));
+    document.querySelector(".a-tab[onclick*='schedule']").classList.add("active");
+
+    document.getElementById("placeholder-msg").style.display = "none";
+    document.getElementById("loc-editor").style.display = "block";
+    document.getElementById("loc-editor").querySelector("h3").innerText = "➕ Новая точка";
+
+    document.getElementById("loc-name").value = "";
+    document.getElementById("loc-desc").value = "";
+    document.getElementById("loc-photo-url").value = "";
+    document.getElementById("loc-audio-url").value = "";
+    document.getElementById("loc-icon").value = "📍";
+
+    const saveBtn = document.querySelector(".loc-editor .main-btn");
+    saveBtn.innerText = "💾 Создать точку";
+    saveBtn.onclick = () => createNewPoint(y, x);
+
+    document.getElementById("event-list").innerHTML = '<div style="color:#999;padding:20px;text-align:center;">Новая точка — события можно добавить после создания</div>';
+    document.getElementById("event-form").style.display = "none";
+}
+
+async function createNewPoint(y, x) {
+    const name = document.getElementById("loc-name").value.trim();
+    const icon = document.getElementById("loc-icon").value.trim() || "📍";
+    if (!name) {
+        showToast("⚠️ Введите название точки");
+        return;
+    }
+    const newId = "point_" + Date.now();
+    const newLoc = {
+        id: newId,
+        name: name,
+        y: y,
+        x: x,
+        icon: icon,
+        category: "other",
+        photo: document.getElementById("loc-photo-url").value.trim(),
+        audio: document.getElementById("loc-audio-url").value.trim()
+    };
+    LOCATIONS.push(newLoc);
+    if (!CONTENT.points) CONTENT.points = {};
+    CONTENT.points[newId] = {
+        id: newId,
+        title: name,
+        description: document.getElementById("loc-desc").value.trim(),
+        image: newLoc.photo,
+        audio: newLoc.audio,
+        x: x,
+        y: y,
+        icon: icon
+    };
+    try {
+        await Promise.all([
+            fetch("/api/locations", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(LOCATIONS) }),
+            saveContent()
+        ]);
+        cancelAddingPoint();
+        initMarkers();
+        selectLoc(newId);
+        renderRoutes();
+        renderQRs();
+        updateAnalytics();
+        showToast("✅ Точка создана! Добавьте её в маршрут.");
+    } catch (e) {
+        console.error(e);
+        showToast("❌ Ошибка создания точки");
+    }
+}
+
+function selectLoc(id) {
+    currentLocId = id;
+    const loc = LOCATIONS.find(l => l.id === id);
+    if (!loc) return;
+
+    document.querySelectorAll(".admin-marker").forEach(el => el.classList.remove("selected"));
+    if (markerLayers[id]) {
+        const el = markerLayers[id].getElement();
+        if (el) el.classList.add("selected");
+    }
+
+    document.getElementById("placeholder-msg").style.display = "none";
+    document.getElementById("loc-editor").style.display = "block";
+    document.getElementById("loc-editor").querySelector("h3").innerText = "✏️ " + loc.name;
+
+    document.getElementById("loc-name").value = loc.name;
+    document.getElementById("loc-desc").value = CONTENT.points[id]?.description || "";
+    document.getElementById("loc-photo-url").value = loc.photo || "";
+    document.getElementById("loc-audio-url").value = loc.audio || "";
+    document.getElementById("loc-icon").value = loc.icon || "📍";
+
+    const saveBtn = document.querySelector(".loc-editor .main-btn");
+    saveBtn.innerText = "💾 Сохранить локацию";
+    saveBtn.onclick = saveLocData;
+
+    renderEventList();
+    document.getElementById("event-form").style.display = "none";
+}
+
+async function saveLocData() {
+    if (!currentLocId) return;
+    const loc = LOCATIONS.find(l => l.id === currentLocId);
+    if (!loc) return;
+
+    loc.name = document.getElementById("loc-name").value.trim() || loc.name;
+    loc.icon = document.getElementById("loc-icon").value.trim() || loc.icon;
+    loc.photo = document.getElementById("loc-photo-url").value.trim();
+    loc.audio = document.getElementById("loc-audio-url").value.trim();
+
+    if (!CONTENT.points[currentLocId]) CONTENT.points[currentLocId] = { id: currentLocId };
+    CONTENT.points[currentLocId].title = loc.name;
+    CONTENT.points[currentLocId].description = document.getElementById("loc-desc").value.trim();
+    CONTENT.points[currentLocId].image = loc.photo;
+    CONTENT.points[currentLocId].audio = loc.audio;
+    CONTENT.points[currentLocId].x = loc.x;
+    CONTENT.points[currentLocId].y = loc.y;
+    CONTENT.points[currentLocId].icon = loc.icon;
+
+    try {
+        await Promise.all([
+            fetch("/api/locations", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(LOCATIONS) }),
+            saveContent()
+        ]);
+        initMarkers();
+        renderRoutes();
+        renderQRs();
+        showToast("✅ Сохранено!");
+    } catch (e) {
+        showToast("❌ Ошибка сохранения");
+    }
+}
+
+async function saveContent() {
+    await fetch("/api/content", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(CONTENT) });
+}
+
+async function saveLocDataToServer() {
+    await fetch("/api/locations", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(LOCATIONS) });
+}
+
+function renderEventList() {
+    const list = document.getElementById("event-list");
+    const locEvents = events.filter(e => e.locationId === currentLocId);
+    if (locEvents.length === 0) {
+        list.innerHTML = '<div style="color:#94a3b8;padding:20px;text-align:center;font-size:13px">Нет событий для этой точки</div>';
+        return;
+    }
+    list.innerHTML = locEvents.map(ev => `
+        <div class="event-item">
+            <h4>${ev.title}</h4>
+            <p>${ev.description || ""}</p>
+            <p style="margin-top:4px;font-size:12px">🕐 ${ev.startTime} — ${ev.endTime}</p>
+            <div class="event-actions">
+                <button class="edit-btn" onclick="editEvent('${ev.id}')">Редактировать</button>
+                <button class="delete-btn" onclick="deleteEvent('${ev.id}')">Удалить</button>
+            </div>
+        </div>
+    `).join("");
+}
+
+function showEventForm() {
+    editingEventId = null;
+    document.getElementById("event-title").value = "";
+    document.getElementById("event-desc").value = "";
+    document.getElementById("event-start").value = "";
+    document.getElementById("event-end").value = "";
+    document.getElementById("event-form").style.display = "block";
+}
+
+function editEvent(id) {
+    const ev = events.find(e => e.id === id);
+    if (!ev) return;
+    editingEventId = id;
+    document.getElementById("event-title").value = ev.title;
+    document.getElementById("event-desc").value = ev.description || "";
+    document.getElementById("event-start").value = ev.startTime;
+    document.getElementById("event-end").value = ev.endTime;
+    document.getElementById("event-form").style.display = "block";
+}
+
+function cancelEventEdit() {
+    document.getElementById("event-form").style.display = "none";
+    editingEventId = null;
+}
+
+async function saveEvent() {
+    const title = document.getElementById("event-title").value.trim();
+    const start = document.getElementById("event-start").value;
+    const end = document.getElementById("event-end").value;
+    if (!title || !start || !end) {
+        showToast("⚠️ Заполните все поля");
+        return;
+    }
+    if (end <= start) {
+        showToast("⚠️ Окончание должно быть позже начала");
+        return;
+    }
+    const evData = {
+        id: editingEventId || "ev_" + Date.now(),
+        locationId: currentLocId,
+        title: title,
+        description: document.getElementById("event-desc").value.trim(),
+        startTime: start,
+        endTime: end
+    };
+    if (editingEventId) {
+        const idx = events.findIndex(e => e.id === editingEventId);
+        if (idx >= 0) events[idx] = evData;
+    } else {
+        events.push(evData);
+    }
+    try {
+        await fetch("/api/schedule", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(events) });
+        document.getElementById("event-form").style.display = "none";
+        editingEventId = null;
+        renderEventList();
+        showToast("✅ Событие сохранено!");
+    } catch (e) {
+        showToast("❌ Ошибка сохранения");
+    }
+}
+
+async function deleteEvent(id) {
+    if (!confirm("Удалить событие?")) return;
+    events = events.filter(e => e.id !== id);
+    await fetch("/api/schedule", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(events) });
+    renderEventList();
+    showToast("🗑 Событие удалено");
+}
+
+// ==================== РЕДАКТОР ПУТЕЙ МАРШРУТОВ ====================
+
+function toggleRouteEdit() {
+    if (isEditingRoutePath) {
+        exitRoutePathEdit();
+    }
+}
+
+function startRoutePathEdit(routeKey) {
+    if (isEditingRoutePath) exitRoutePathEdit();
+    
+    isEditingRoutePath = true;
+    currentRoutePath = routeKey;
+    
+    const route = CONTENT.routes[routeKey];
+    if (!route) return;
+    
+    // Показываем кнопку редактирования пути
+    const btn = document.getElementById("a-tab-route");
+    btn.style.display = "inline-block";
+    btn.innerText = "✅ Завершить";
+    btn.classList.add("active-route");
+    
+    // Загружаем существующие waypoints или создаём прямую линию
+    waypoints = [];
+    waypointMarkers = [];
+    
+    const points = route.points || [];
+    if (points.length < 2) {
+        showToast("⚠️ Нужно минимум 2 точки в маршруте");
+        exitRoutePathEdit();
+        return;
+    }
+    
+    // Создаём waypoints между точками маршрута
+    for (let i = 0; i < points.length - 1; i++) {
+        const fromPt = CONTENT.points[points[i]];
+        const toPt = CONTENT.points[points[i + 1]];
+        if (!fromPt || !toPt) continue;
+        
+        const segmentWaypoints = route.waypoints && route.waypoints[i] ? route.waypoints[i] : [];
+        
+        if (segmentWaypoints.length === 0) {
+            // Прямая линия — добавляем промежуточную точку посередине
+            waypoints.push({
+                segmentIndex: i,
+                points: [
+                    { x: Math.round((fromPt.x + toPt.x) / 2), y: Math.round((fromPt.y + toPt.y) / 2) }
+                ]
+            });
+        } else {
+            waypoints.push({
+                segmentIndex: i,
+                points: segmentWaypoints.map(wp => ({ x: wp.x, y: wp.y }))
+            });
+        }
+    }
+    
+    renderWaypoints();
+    drawPathLine();
+    
+    switchAdminTab("routes");
+    showToast(`✏️ Редактирование пути: ${route.name}. Кликайте на карте, чтобы добавить точки. Перетаскивайте точки.`);
+    
+    // Показываем инструкцию в сайдбаре
+    const routesList = document.getElementById("routes-list");
+    const infoDiv = document.createElement("div");
+    infoDiv.id = "path-editor-panel";
+    infoDiv.className = "path-editor-info";
+    infoDiv.innerHTML = `
+        <h4>✏️ Редактирование пути: ${route.name}</h4>
+        <p>• Кликайте на линии — добавить точку изгиба</p>
+        <p>• Перетаскивайте зелёные точки — менять траекторию</p>
+        <p>• Двойной клик на зелёную точку — удалить</p>
+        <div class="tip">💡 Сохраните маршрут, когда закончите</div>
+        <div class="path-actions">
+            <button class="main-btn success" onclick="saveRoutePath()">💾 Сохранить путь</button>
+            <button class="main-btn secondary" onclick="exitRoutePathEdit()">❌ Отмена</button>
+        </div>
+    `;
+    routesList.insertBefore(infoDiv, routesList.firstChild);
+    
+    document.getElementById("admin-map").style.cursor = "crosshair";
+}
+
+function addWaypoint(lat, lng) {
+    if (!isEditingRoutePath || !currentRoutePath) return;
+    
+    // Находим ближайший сегмент
+    const route = CONTENT.routes[currentRoutePath];
+    const points = route.points || [];
+    let bestSegment = -1;
+    let bestDist = Infinity;
+    
+    for (let i = 0; i < points.length - 1; i++) {
+        const fromPt = CONTENT.points[points[i]];
+        const toPt = CONTENT.points[points[i + 1]];
+        if (!fromPt || !toPt) continue;
+        
+        const dist = pointToSegmentDistance(lng, lat, fromPt.x, fromPt.y, toPt.x, toPt.y);
+        if (dist < bestDist) {
+            bestDist = dist;
+            bestSegment = i;
+        }
+    }
+    
+    if (bestSegment >= 0) {
+        if (!waypoints[bestSegment]) {
+            waypoints[bestSegment] = { segmentIndex: bestSegment, points: [] };
+        }
+        waypoints[bestSegment].points.push({ x: Math.round(lng), y: Math.round(lat) });
+        renderWaypoints();
+        drawPathLine();
+    }
+}
+
+function pointToSegmentDistance(px, py, x1, y1, x2, y2) {
+    const dx = x2 - x1;
+    const dy = y2 - y1;
+    const len2 = dx * dx + dy * dy;
+    if (len2 === 0) return Math.sqrt((px - x1) ** 2 + (py - y1) ** 2);
+    let t = ((px - x1) * dx + (py - y1) * dy) / len2;
+    t = Math.max(0, Math.min(1, t));
+    const projX = x1 + t * dx;
+    const projY = y1 + t * dy;
+    return Math.sqrt((px - projX) ** 2 + (py - projY) ** 2);
+}
+
+function renderWaypoints() {
+    // Удаляем старые маркеры
+    waypointMarkers.forEach(m => map.removeLayer(m));
+    waypointMarkers = [];
+    
+    waypoints.forEach((seg, segIdx) => {
+        if (!seg) return;
+        seg.points.forEach((wp, wpIdx) => {
+            const icon = L.divIcon({ className: "waypoint-marker", iconSize: [20, 20], iconAnchor: [10, 10] });
+            const marker = L.marker([wp.y, wp.x], { icon, draggable: true }).addTo(map);
+            
+            marker.on("drag", function(e) {
+                const pos = e.target.getLatLng();
+                wp.x = Math.round(pos.lng);
+                wp.y = Math.round(pos.lat);
+                drawPathLine();
+            });
+            
+            marker.on("dblclick", function(e) {
+                L.DomEvent.stopPropagation(e);
+                seg.points.splice(wpIdx, 1);
+                renderWaypoints();
+                drawPathLine();
+            });
+            
+            waypointMarkers.push(marker);
+        });
+    });
+}
+
+function drawPathLine() {
+    if (pathLine) {
+        map.removeLayer(pathLine);
+    }
+    
+    const route = CONTENT.routes[currentRoutePath];
+    if (!route) return;
+    
+    const points = route.points || [];
+    const latlngs = [];
+    
+    for (let i = 0; i < points.length; i++) {
+        const pt = CONTENT.points[points[i]];
+        if (!pt) continue;
+        
+        latlngs.push([pt.y, pt.x]);
+        
+        if (i < points.length - 1 && waypoints[i] && waypoints[i].points.length > 0) {
+            waypoints[i].points.forEach(wp => {
+                latlngs.push([wp.y, wp.x]);
+            });
+        }
+    }
+    
+    if (latlngs.length > 1) {
+        pathLine = L.polyline(latlngs, { color: "#10b981", weight: 4, opacity: 0.8, dashArray: "6, 6" }).addTo(map);
+    }
+}
+
+function rebuildPathFromWaypoints() {
+    // Пересчитываем путь при перемещении основных точек
+    drawPathLine();
+}
+
+async function saveRoutePath() {
+    if (!currentRoutePath) return;
+    
+    const route = CONTENT.routes[currentRoutePath];
+    if (!route) return;
+    
+    // Сохраняем waypoints в формате: массив для каждого сегмента между точками
+    route.waypoints = waypoints.map(seg => {
+        if (!seg || !seg.points) return [];
+        return seg.points.map(wp => ({ x: wp.x, y: wp.y }));
+    });
+    
+    try {
+        await saveContent();
+        showToast("✅ Путь маршрута сохранён!");
+        exitRoutePathEdit();
+        previewRoute(currentRoutePath);
+    } catch (e) {
+        showToast("❌ Ошибка сохранения пути");
+    }
+}
+
+function exitRoutePathEdit() {
+    isEditingRoutePath = false;
+    currentRoutePath = null;
+    
+    // Удаляем маркеры waypoints
+    waypointMarkers.forEach(m => map.removeLayer(m));
+    waypointMarkers = [];
+    waypoints = [];
+    
+    if (pathLine) {
+        map.removeLayer(pathLine);
+        pathLine = null;
+    }
+    
+    const btn = document.getElementById("a-tab-route");
+    btn.style.display = "none";
+    btn.classList.remove("active-route");
+    
+    const panel = document.getElementById("path-editor-panel");
+    if (panel) panel.remove();
+    
+    document.getElementById("admin-map").style.cursor = "";
+    
+    // Восстанавливаем превью если был
+    renderRoutes();
+}
+
+// ==================== /РЕДАКТОР ПУТЕЙ ====================
+
+function renderRoutes() {
+    const container = document.getElementById("routes-list");
+    if (!CONTENT.routes || Object.keys(CONTENT.routes).length === 0) {
+        container.innerHTML = '<div style="color:#94a3b8;padding:20px;text-align:center">Нет маршрутов</div>';
+        return;
+    }
+    container.innerHTML = Object.entries(CONTENT.routes).map(([key, route]) => `
+        <div class="route-card">
+            <h4>${route.name}</h4>
+            <p style="font-size:12px;color:#64748b">${route.description || ""}</p>
+            <div class="route-points" id="route-points-${key}" ondrop="dropRoutePoint(event,'${key}')" ondragover="allowDrop(event)">
+                ${(route.points || []).map((pid, idx) => {
+                    const pt = CONTENT.points[pid];
+                    return `<span class="route-point-tag" draggable="true" ondragstart="dragRoutePoint(event,'${key}',${idx})">
+                        ${pt?.icon || "📍"} ${pt?.title || pid}
+                        <span class="remove" onclick="removeRoutePoint('${key}',${idx})">×</span>
+                    </span>`;
+                }).join("")}
+            </div>
+            <div style="display:flex;gap:8px;margin-top:8px">
+                <select class="route-select" id="add-to-${key}">
+                    <option value="">Добавить точку...</option>
+                    ${Object.entries(CONTENT.points || {}).filter(([id]) => !(route.points || []).includes(id)).map(([id, pt]) =>
+                        `<option value="${id}">${pt.icon || "📍"} ${pt.title || id}</option>`
+                    ).join("")}
+                </select>
+                <button class="main-btn" style="padding:8px 14px;flex:0 0 auto" onclick="addRoutePoint('${key}')">+</button>
+            </div>
+            <div class="route-actions">
+                <button class="route-preview-btn" onclick="previewRoute('${key}')">👁 Показать</button>
+                <button class="route-edit-path-btn" onclick="startRoutePathEdit('${key}')">✏️ Путь</button>
+                <button class="route-delete-btn" onclick="deleteRoute('${key}')">🗑 Удалить</button>
+            </div>
+        </div>
+    `).join("");
+}
+
+async function createRoute() {
+    const id = document.getElementById("new-route-id").value.trim();
+    const name = document.getElementById("new-route-name").value.trim();
+    const desc = document.getElementById("new-route-desc").value.trim();
+    if (!id || !name) {
+        showToast("⚠️ Заполните ID и название");
+        return;
+    }
+    if (!/^[a-z0-9_]+$/.test(id)) {
+        showToast("⚠️ ID только латиница, цифры, подчёркивание");
+        return;
+    }
+    if (!CONTENT.routes) CONTENT.routes = {};
+    CONTENT.routes[id] = { name: name, description: desc, points: [], waypoints: [] };
+    await saveContent();
+    renderRoutes();
+    updateAnalytics();
+    document.getElementById("new-route-id").value = "";
+    document.getElementById("new-route-name").value = "";
+    document.getElementById("new-route-desc").value = "";
+    showToast("✅ Маршрут создан!");
+}
+
+async function deleteRoute(key) {
+    if (!confirm("Удалить маршрут?")) return;
+    delete CONTENT.routes[key];
+    await saveContent();
+    renderRoutes();
+    updateAnalytics();
+    if (routePreviewLayer) {
+        map.removeLayer(routePreviewLayer);
+        routePreviewLayer = null;
+    }
+    showToast("🗑 Маршрут удалён");
+}
+
+async function addRoutePoint(routeKey) {
+    const select = document.getElementById("add-to-" + routeKey);
+    const pointId = select.value;
+    if (!pointId) return;
+    if (!CONTENT.routes[routeKey].points) CONTENT.routes[routeKey].points = [];
+    CONTENT.routes[routeKey].points.push(pointId);
+    await saveContent();
+    renderRoutes();
+    showToast("✅ Точка добавлена!");
+}
+
+async function removeRoutePoint(routeKey, idx) {
+    CONTENT.routes[routeKey].points.splice(idx, 1);
+    // Удаляем waypoints для удалённого сегмента
+    if (CONTENT.routes[routeKey].waypoints) {
+        CONTENT.routes[routeKey].waypoints.splice(idx, 1);
+    }
+    await saveContent();
+    renderRoutes();
+    showToast("🗑 Точка удалена из маршрута");
+}
+
+function dragRoutePoint(ev, routeKey, idx) {
+    ev.dataTransfer.setData("text/plain", JSON.stringify({ routeKey, idx }));
+}
+
+function allowDrop(ev) {
+    ev.preventDefault();
+}
+
+async function dropRoutePoint(ev, targetRouteKey) {
+    ev.preventDefault();
+    const data = JSON.parse(ev.dataTransfer.getData("text/plain"));
+    const { routeKey, idx } = data;
+    if (routeKey !== targetRouteKey) return;
+    const points = CONTENT.routes[routeKey].points;
+    const [moved] = points.splice(idx, 1);
+    const container = document.getElementById("route-points-" + targetRouteKey);
+    const rect = container.getBoundingClientRect();
+    const dropX = ev.clientX - rect.left;
+    const tags = container.querySelectorAll(".route-point-tag");
+    let newIdx = points.length;
+    for (let i = 0; i < tags.length; i++) {
+        const tagRect = tags[i].getBoundingClientRect();
+        if (dropX < tagRect.left - rect.left + tagRect.width / 2) {
+            newIdx = i;
+            break;
+        }
+    }
+    points.splice(newIdx, 0, moved);
+    await saveContent();
+    renderRoutes();
+}
+
+function previewRoute(routeKey) {
+    if (routePreviewLayer) {
+        map.removeLayer(routePreviewLayer);
+        routePreviewLayer = null;
+    }
+    const route = CONTENT.routes[routeKey];
+    if (!route || !route.points) return;
+    
+    const latlngs = [];
+    const points = route.points;
+    
+    for (let i = 0; i < points.length; i++) {
+        const pt = CONTENT.points[points[i]];
+        if (!pt) continue;
+        latlngs.push([pt.y, pt.x]);
+        
+        // Добавляем waypoints между точками
+        if (i < points.length - 1 && route.waypoints && route.waypoints[i]) {
+            route.waypoints[i].forEach(wp => {
+                latlngs.push([wp.y, wp.x]);
+            });
+        }
+    }
+    
+    if (latlngs.length < 2) {
+        showToast("⚠️ Маршрут должен содержать минимум 2 точки");
+        return;
+    }
+    routePreviewLayer = L.polyline(latlngs, { color: "#ef4444", weight: 5, opacity: 0.8, dashArray: "8, 8" }).addTo(map);
+    map.fitBounds(latlngs, { padding: [80, 80] });
+    showToast("👁 Маршрут показан на карте");
+}
+
+function renderQRs() {
+    const container = document.getElementById("qr-items");
+    if (!CONTENT.points || Object.keys(CONTENT.points).length === 0) {
+        container.innerHTML = '<div style="color:#94a3b8;padding:12px;text-align:center">Нет точек</div>';
+        return;
+    }
+    container.innerHTML = Object.entries(CONTENT.points).map(([id, pt]) => `
+        <div class="qr-item">
+            <span style="font-size:18px;margin-right:8px">${pt.icon || "📍"}</span>
+            <span class="url">/guide.html?point=${id}</span>
+            <button onclick="copyQR('${id}')">Копировать</button>
+        </div>
+    `).join("");
+}
+
+function copyQR(id) {
+    const url = window.location.origin + "/guide.html?point=" + id;
+    navigator.clipboard.writeText(url).then(() => showToast("✅ Ссылка скопирована!"));
+}
+
+function updateAnalytics() {
+    document.getElementById("stat-points").innerText = Object.keys(CONTENT.points || {}).length;
+    document.getElementById("stat-routes").innerText = Object.keys(CONTENT.routes || {}).length;
+    document.getElementById("stat-events").innerText = events.length;
+    const shortRoute = CONTENT.routes?.short;
+    document.getElementById("stat-short").innerText = shortRoute?.points?.length || 0;
+}
+
+function switchAdminTab(tab) {
+    document.querySelectorAll(".tab-content").forEach(t => t.classList.remove("active"));
+    document.querySelectorAll(".a-tab").forEach(t => t.classList.remove("active"));
+    document.getElementById("tab-" + tab).classList.add("active");
+    event.target.classList.add("active");
+    if (tab === "routes") renderRoutes();
+    if (tab === "analytics") updateAnalytics();
+    if (tab === "settings") renderQRs();
+}
+
+function showToast(msg) {
+    const toast = document.getElementById("toast");
+    toast.innerText = msg;
+    toast.classList.add("show");
+    setTimeout(() => toast.classList.remove("show"), 3000);
+}
+</script>
+</body>
+</html>
