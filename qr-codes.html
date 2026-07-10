@@ -37,13 +37,13 @@ body{background:#fff;padding:10px}
 <body>
 <div class="container">
 <h1>🔗 QR-коды точек экскурсии</h1>
-<p class="subtitle">Проверьте URL ниже и распечатайте QR-коды</p>
+<p class="subtitle">Проверьте URL и распечатайте QR-коды</p>
 
 <div class="server-url-box">
-<h3>✅ Сервер запущен!</h3>
-<p>Ваш URL для QR-кодов (HTTPS — работает на iPhone):</p>
-<input type="text" id="serverUrl" value="https://fruity-moments-invite.loca.lt" readonly>
-<p class="example">Если URL изменился — обновите и нажмите "Обновить QR-коды"</p>
+<h3>✅ GitHub Pages URL</h3>
+<p>Ваш постоянный URL для QR-кодов:</p>
+<input type="text" id="serverUrl" value="https://dispitchpen1078-spec.github.io/audio-guide" placeholder="https://...">
+<p class="example">Если репозиторий назван иначе — измените URL</p>
 <button onclick="regenerateQRs()" style="padding:8px 20px;background:#10b981;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600">🔄 Обновить QR-коды</button>
 </div>
 
@@ -57,7 +57,7 @@ let contentData = null;
 function getBaseUrl() {
   const input = document.getElementById("serverUrl").value.trim();
   if (!input) {
-    alert("Введите URL сервера!");
+    alert("Введите URL!");
     return null;
   }
   return input.replace(/\/$/, "") + "/guide.html";
@@ -73,7 +73,7 @@ async function loadContent() {
     document.getElementById("qrGrid").innerHTML = `
       <div class="error-box" style="grid-column:1/-1;">
         <h3>❌ Не удалось загрузить content.json</h3>
-        <p>Убедитесь, что сервер запущен и вы открыли страницу через http://localhost:3000/qr-codes.html</p>
+        <p>Откройте эту страницу через локальный сервер: node server.js</p>
       </div>
     `;
     return false;
@@ -82,7 +82,7 @@ async function loadContent() {
 
 function generateQRs() {
   if (!contentData || !contentData.points) {
-    document.getElementById("qrGrid").innerHTML = `<div class="error-box" style="grid-column:1/-1;"><h3>Нет данных о точках</h3></div>`;
+    document.getElementById("qrGrid").innerHTML = `<div class="error-box" style="grid-column:1/-1;"><h3>Нет данных</h3></div>`;
     return;
   }
 
