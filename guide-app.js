@@ -229,16 +229,13 @@ function showRouteSelect(firstPointId) {
   if (mapScreen) mapScreen.style.display = "none";
 
   const list = document.getElementById("route-list");
-  if (!list) return;
+  if (!list) {
+    console.error("route-list not found!");
+    return;
+  }
   list.innerHTML = "";
-
-  // Если firstPointId не передан — показываем ВСЕ маршруты
-  const availableRoutes = [];
-  Object.entries(CONTENT.routes || {}).forEach(([id, route]) => {
-    if (!firstPointId || route.points[0] === firstPointId) {
-      availableRoutes.push({ id, route });
-    }
-  });
+  // ... остальное
+}
 
   // Заголовок
   const header = document.querySelector(".route-header");
@@ -301,7 +298,6 @@ function showRouteSelect(firstPointId) {
   `;
   offlineBtn.onclick = cacheForOffline;
   list.appendChild(offlineBtn);
-}
 
   const offlineBtn = document.createElement("button");
   offlineBtn.className = "route-item";
@@ -510,7 +506,7 @@ function updateNextPointSection() {
 function initAudio(audioUrl) {
   console.log("initAudio(), audioUrl:", audioUrl);
   
-  // Останавливаем и сбрасываем старое аудио
+  // Сбрасываем старое аудио
   if (audio) {
     audio.pause();
     audio.currentTime = 0;
@@ -533,15 +529,22 @@ function initAudio(audioUrl) {
     return;
   }
 
-  // Проверяем кэш
+  // Проверяем кэш — но только если файл реально загрузился раньше
   if (audioCache[audioUrl]) {
-    console.log("Using cached audio");
-    audio = audioCache[audioUrl];
-    setupAudioEvents(audio);
-    if (durationEl) durationEl.textContent = formatTime(audio.duration) || "0:00";
-    if (playBtn) playBtn.textContent = "▶️";
-    window.currentAudioUrl = audioUrl;
-    return;
+    const cached = audioCache[audioUrl];
+    // Проверяем, что кэшированное аудио валидное
+    if (!cached.error && cached.duration > 0) {
+      console.log("Using cached audio");
+      audio = cached;
+      setupAudioEvents(audio);
+      if (durationEl) durationEl.textContent = formatTime(audio.duration) || "0:00";
+      if (playBtn) playBtn.textContent = "▶️";
+      window.currentAudioUrl = audioUrl;
+      return;
+    } else {
+      console.log("Cached audio is invalid, removing");
+      delete audioCache[audioUrl];
+    }
   }
 
   if (playBtn) playBtn.textContent = "⬇️";
@@ -595,6 +598,12 @@ function togglePlay() {
     return;
   }
 
+  // Если аудио есть, но битое (ошибка загрузки) — сбрасываем
+  if (audio && audio.error) {
+    console.log("Audio has error, resetting");
+    audio = null;
+  }
+
   // Если аудио уже создано и играет — пауза
   if (audio && !audio.paused && !audio.ended) {
     console.log("Pausing existing audio");
@@ -607,7 +616,15 @@ function togglePlay() {
   // Если аудио создано и на паузе — play
   if (audio && audio.paused && !audio.ended) {
     console.log("Resuming paused audio");
-    audio.play();
+    const playPromise = audio.play();
+    if (playPromise !== undefined) {
+      playPromise.catch(err => {
+        console.error("Play failed:", err);
+        // Если play не удался — аудио битое, создаём заново
+        audio = null;
+        togglePlay(); // рекурсивно создаём новое
+      });
+    }
     const playBtn = document.getElementById("playPauseBtn");
     if (playBtn) playBtn.textContent = "⏸️";
     return;
@@ -636,7 +653,7 @@ function togglePlay() {
   audio.preload = "auto";
   audio.playsInline = true;
 
-  // Обработка ошибок
+  // Обработка ошибок загрузки
   audio.addEventListener("error", (e) => {
     console.error("Audio load error:", e);
     console.error("Audio error code:", audio.error?.code);
@@ -644,7 +661,7 @@ function togglePlay() {
     let msg = "❌ Ошибка аудио";
     if (code === 2) msg = "❌ Сетевая ошибка";
     if (code === 3) msg = "❌ Формат не поддерживается";
-    if (code === 4) msg = "❌ Файл не найден";
+    if (code === 4) msg = "❌ Файл не найден (проверьте офлайн-кэш)";
     
     const playBtn = document.getElementById("playPauseBtn");
     const durationEl = document.getElementById("audioDuration");
@@ -656,6 +673,15 @@ function togglePlay() {
   // Когда готово к воспроизведению
   audio.addEventListener("canplaythrough", () => {
     console.log("Audio canplaythrough, duration:", audio.duration);
+    
+    if (!audio.duration || isNaN(audio.duration)) {
+      console.error("Audio has invalid duration");
+      const playBtn = document.getElementById("playPauseBtn");
+      if (playBtn) playBtn.textContent = "❌";
+      showToast("❌ Ошибка загрузки аудио");
+      return;
+    }
+    
     audioCache[audioUrl] = audio;
     const durationEl = document.getElementById("audioDuration");
     const playBtn = document.getElementById("playPauseBtn");
