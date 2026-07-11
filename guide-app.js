@@ -108,6 +108,20 @@ const DEFAULT_CONTENT = {
   }
 };
 
+// Принудительно обновляем Service Worker
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.getRegistrations().then(registrations => {
+    registrations.forEach(reg => {
+      console.log('Unregistering old SW:', reg.scope);
+      reg.unregister();
+    });
+    // Регистрируем заново
+    navigator.serviceWorker.register('sw.js').then(reg => {
+      console.log('SW registered:', reg.scope);
+    });
+  });
+}
+
 // ==================== КОНФИГУРАЦИЯ ====================
 const MAP_SCALE_METERS_PER_PIXEL = 0.26;
 const STEPS_PER_METER = 1.3;
