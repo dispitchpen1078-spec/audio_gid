@@ -472,8 +472,12 @@ function updateNextPointSection() {
 
 // ==================== АУДИОПЛЕЕР ====================
 function initAudio(audioUrl) {
+  console.log("initAudio(), audioUrl:", audioUrl);
+  
+  // Останавливаем и сбрасываем старое аудио
   if (audio) {
     audio.pause();
+    audio.currentTime = 0;
     audio = null;
   }
 
@@ -489,21 +493,24 @@ function initAudio(audioUrl) {
 
   if (!audioUrl) {
     if (playBtn) playBtn.textContent = "🔇";
+    window.currentAudioUrl = null;
     return;
   }
 
+  // Проверяем кэш
   if (audioCache[audioUrl]) {
+    console.log("Using cached audio");
     audio = audioCache[audioUrl];
     setupAudioEvents(audio);
     if (durationEl) durationEl.textContent = formatTime(audio.duration) || "0:00";
     if (playBtn) playBtn.textContent = "▶️";
+    window.currentAudioUrl = audioUrl;
     return;
   }
 
   if (playBtn) playBtn.textContent = "⬇️";
   if (durationEl) durationEl.textContent = "Нажмите ▶️";
 
-  audio = null;
   window.currentAudioUrl = audioUrl;
 }
 
@@ -545,65 +552,85 @@ function setupAudioEvents(audioObj) {
 
 function togglePlay() {
   const audioUrl = window.currentAudioUrl;
-  console.log("togglePlay(), audioUrl:", audioUrl);
+  console.log("togglePlay(), audioUrl:", audioUrl, "audio exists:", !!audio, "audio.paused:", audio?.paused);
   
   if (!audioUrl) {
     console.log("No audioUrl, returning");
     return;
   }
 
-  // Нормализуем URL для сравнения
-  const fullUrl = new URL(audioUrl, location.href).href;
-  
-  // Если аудио не создано или URL другой — создаём новое
-  const needNewAudio = !audio || !audio.src || audio.src !== fullUrl;
-  
-  if (needNewAudio) {
-    console.log("Creating new Audio for:", audioUrl);
-    showToast("⏳ Загрузка аудио...");
-
-    if (audio) {
-      audio.pause();
-      audio.currentTime = 0;
-      audio = null;
-    }
-
-    audio = new Audio(audioUrl);
-    audio.preload = "auto";
-    audio.playsInline = true;
-
-    // Обработка ошибок
-    audio.addEventListener("error", (e) => {
-      console.error("Audio load error:", e);
-      console.error("Audio error code:", audio.error?.code);
-      const code = audio.error?.code;
-      let msg = "❌ Ошибка аудио";
-      if (code === 2) msg = "❌ Сетевая ошибка";
-      if (code === 3) msg = "❌ Формат не поддерживается";
-      if (code === 4) msg = "❌ Файл не найден";
-      
-      const playBtn = document.getElementById("playPauseBtn");
-      const durationEl = document.getElementById("audioDuration");
-      if (playBtn) playBtn.textContent = "❌";
-      if (durationEl) durationEl.textContent = msg;
-      showToast(msg);
-    });
-
-    // Когда готово к воспроизведению
-    audio.addEventListener("canplaythrough", () => {
-      console.log("Audio canplaythrough, duration:", audio.duration);
-      audioCache[audioUrl] = audio;
-      const durationEl = document.getElementById("audioDuration");
-      const playBtn = document.getElementById("playPauseBtn");
-      if (durationEl) durationEl.textContent = formatTime(audio.duration);
-      if (playBtn) playBtn.textContent = "⏸️";
-      audio.play();
-    });
-
-    setupAudioEvents(audio);
-    audio.load();
+  // Если аудио уже создано и играет — пауза
+  if (audio && !audio.paused && !audio.ended) {
+    console.log("Pausing existing audio");
+    audio.pause();
+    const playBtn = document.getElementById("playPauseBtn");
+    if (playBtn) playBtn.textContent = "▶️";
     return;
   }
+
+  // Если аудио создано и на паузе — play
+  if (audio && audio.paused && !audio.ended) {
+    console.log("Resuming paused audio");
+    audio.play();
+    const playBtn = document.getElementById("playPauseBtn");
+    if (playBtn) playBtn.textContent = "⏸️";
+    return;
+  }
+
+  // Если аудио закончилось — начинаем сначала
+  if (audio && audio.ended) {
+    console.log("Audio ended, restarting");
+    audio.currentTime = 0;
+    audio.play();
+    const playBtn = document.getElementById("playPauseBtn");
+    if (playBtn) playBtn.textContent = "⏸️";
+    return;
+  }
+
+  // Создаём новое аудио
+  console.log("Creating new Audio for:", audioUrl);
+  showToast("⏳ Загрузка аудио...");
+
+  if (audio) {
+    audio.pause();
+    audio = null;
+  }
+
+  audio = new Audio(audioUrl);
+  audio.preload = "auto";
+  audio.playsInline = true;
+
+  // Обработка ошибок
+  audio.addEventListener("error", (e) => {
+    console.error("Audio load error:", e);
+    console.error("Audio error code:", audio.error?.code);
+    const code = audio.error?.code;
+    let msg = "❌ Ошибка аудио";
+    if (code === 2) msg = "❌ Сетевая ошибка";
+    if (code === 3) msg = "❌ Формат не поддерживается";
+    if (code === 4) msg = "❌ Файл не найден";
+    
+    const playBtn = document.getElementById("playPauseBtn");
+    const durationEl = document.getElementById("audioDuration");
+    if (playBtn) playBtn.textContent = "❌";
+    if (durationEl) durationEl.textContent = msg;
+    showToast(msg);
+  });
+
+  // Когда готово к воспроизведению
+  audio.addEventListener("canplaythrough", () => {
+    console.log("Audio canplaythrough, duration:", audio.duration);
+    audioCache[audioUrl] = audio;
+    const durationEl = document.getElementById("audioDuration");
+    const playBtn = document.getElementById("playPauseBtn");
+    if (durationEl) durationEl.textContent = formatTime(audio.duration);
+    if (playBtn) playBtn.textContent = "⏸️";
+    audio.play();
+  });
+
+  setupAudioEvents(audio);
+  audio.load();
+}
 
   // Аудио уже загружено — play/pause
   if (audio.paused) {
@@ -617,7 +644,6 @@ function togglePlay() {
     const playBtn = document.getElementById("playPauseBtn");
     if (playBtn) playBtn.textContent = "▶️";
   }
-}
 
 function seekAudio(seconds) {
   if (!audio) return;
