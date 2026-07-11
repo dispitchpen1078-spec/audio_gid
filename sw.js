@@ -1,4 +1,4 @@
-const CACHE_NAME = 'audio-gid-v10';
+const CACHE_NAME = 'audio-gid-v11';
 
 const URLS_TO_CACHE = [
   './',
@@ -25,24 +25,46 @@ const CONTENT_DATA = {
   }
 };
 
+// Определяем MIME-type по расширению
+function getMimeType(url) {
+  if (url.endsWith('.mp3')) return 'audio/mpeg';
+  if (url.endsWith('.jpg') || url.endsWith('.jpeg')) return 'image/jpeg';
+  if (url.endsWith('.png')) return 'image/png';
+  if (url.endsWith('.json')) return 'application/json';
+  if (url.endsWith('.css')) return 'text/css';
+  if (url.endsWith('.js')) return 'application/javascript';
+  if (url.endsWith('.html')) return 'text/html';
+  return 'application/octet-stream';
+}
+
 // ========== INSTALL ==========
 self.addEventListener('install', (e) => {
-  console.log('SW v10: Installing...');
+  console.log('SW v11: Installing...');
   e.waitUntil(
     caches.open(CACHE_NAME).then(async (cache) => {
       for (const url of URLS_TO_CACHE) {
         try {
           const response = await fetch(url);
           if (response && response.status === 200) {
-            await cache.put(url, response);
-            console.log('SW v10 install cached:', url);
+            const blob = await response.blob();
+            const mimeType = getMimeType(url);
+            const newResponse = new Response(blob, {
+              status: 200,
+              statusText: 'OK',
+              headers: {
+                'Content-Type': mimeType,
+                'Content-Length': blob.size.toString()
+              }
+            });
+            await cache.put(url, newResponse);
+            console.log('SW v11 install cached:', url, 'size:', blob.size, 'type:', mimeType);
           }
         } catch (err) {
-          console.log('SW v10 install skip:', url, err.message);
+          console.log('SW v11 install skip:', url, err.message);
         }
       }
     }).then(() => {
-      console.log('SW v10: Install complete');
+      console.log('SW v11: Install complete');
       self.skipWaiting();
     })
   );
@@ -50,19 +72,19 @@ self.addEventListener('install', (e) => {
 
 // ========== ACTIVATE ==========
 self.addEventListener('activate', (e) => {
-  console.log('SW v10: Activating...');
+  console.log('SW v11: Activating...');
   e.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((name) => {
           if (name !== CACHE_NAME) {
-            console.log('SW v10: Deleting old cache:', name);
+            console.log('SW v11: Deleting old cache:', name);
             return caches.delete(name);
           }
         })
       );
     }).then(() => {
-      console.log('SW v10: Activated');
+      console.log('SW v11: Activated');
       return self.clients.claim();
     })
   );
@@ -80,11 +102,11 @@ self.addEventListener('fetch', (e) => {
     cacheKey = '.' + cacheKey;
   }
 
-  console.log('SW v10: Fetch:', e.request.url, '→ key:', cacheKey);
+  console.log('SW v11: Fetch:', e.request.url, '→ key:', cacheKey);
 
   e.respondWith(
     caches.open(CACHE_NAME).then(async (cache) => {
-      // Пробуем найти по нормализованному ключу
+      // Ищем по нормализованному ключу
       let cachedResponse = await cache.match(cacheKey);
 
       // Если не нашли — пробуем без ./
@@ -98,44 +120,53 @@ self.addEventListener('fetch', (e) => {
       }
 
       if (cachedResponse) {
-        console.log('SW v10: CACHE HIT:', cacheKey);
+        console.log('SW v11: CACHE HIT:', cacheKey);
 
-        // Проверяем, что ответ валидный (не пустой)
-        const cloned = cachedResponse.clone();
-        const blob = await cloned.blob();
-        if (blob.size > 0) {
-          console.log('SW v10: Serving from cache, size:', blob.size);
-          return cachedResponse;
-        } else {
-          console.log('SW v10: Cached response is empty, fetching...');
-        }
-      }
+        // Проверяем заголовки
+        const contentType = cachedResponse.headers.get('Content-Type');
+        console.log('SW v11: Cached response type:', contentType);
 
-      // Нет в кэше или пустой — пробуем сеть
-      try {
-        const networkResponse = await fetch(e.request);
-        if (networkResponse && networkResponse.status === 200) {
-          const responseClone = networkResponse.clone();
-          const blob = await responseClone.blob();
-          if (blob.size > 0) {
-            await cache.put(cacheKey, networkResponse.clone());
-            console.log('SW v10: Cached from network:', cacheKey, 'size:', blob.size);
-          }
-        }
-        return networkResponse;
-      } catch (err) {
-        console.log('SW v10: OFFLINE, no cache:', cacheKey);
-        // Офлайн и нет в кэше — возвращаем пустой MP3 чтобы не ломать плеер
-        if (cacheKey.endsWith('.mp3') || cacheKey.endsWith('.ogg') || cacheKey.endsWith('.wav')) {
-          return new Response(new Blob(), {
+        // Для аудио проверяем, что Content-Type правильный
+        if (cacheKey.endsWith('.mp3') && (!contentType || !contentType.includes('audio'))) {
+          console.log('SW v11: Wrong content-type for audio, fixing...');
+          const blob = await cachedResponse.blob();
+          const fixedResponse = new Response(blob, {
             status: 200,
             statusText: 'OK',
             headers: {
               'Content-Type': 'audio/mpeg',
-              'Content-Length': '0'
+              'Content-Length': blob.size.toString()
             }
           });
+          return fixedResponse;
         }
+
+        return cachedResponse;
+      }
+
+      // Нет в кэше — пробуем сеть
+      try {
+        const networkResponse = await fetch(e.request);
+        if (networkResponse && networkResponse.status === 200) {
+          const blob = await networkResponse.clone().blob();
+          const mimeType = getMimeType(cacheKey);
+          const cacheResponse = new Response(blob, {
+            status: 200,
+            statusText: 'OK',
+            headers: {
+              'Content-Type': mimeType,
+              'Content-Length': blob.size.toString()
+            }
+          });
+          await cache.put(cacheKey, cacheResponse);
+          console.log('SW v11: Cached from network:', cacheKey, 'size:', blob.size);
+
+          // Возвращаем оригинальный network response
+          return networkResponse;
+        }
+        return networkResponse;
+      } catch (err) {
+        console.log('SW v11: OFFLINE, no cache:', cacheKey);
         return new Response('Not found', {
           status: 404,
           statusText: 'Not Found',
@@ -149,7 +180,7 @@ self.addEventListener('fetch', (e) => {
 // ========== MESSAGE (CACHE_ALL) ==========
 self.addEventListener('message', (e) => {
   if (e.data.type === 'CACHE_ALL') {
-    console.log('SW v10: CACHE_ALL started');
+    console.log('SW v11: CACHE_ALL started');
     e.waitUntil(
       caches.open(CACHE_NAME).then(async (cache) => {
         const urls = [];
@@ -166,10 +197,9 @@ self.addEventListener('message', (e) => {
           try {
             const cached = await cache.match(url);
             if (cached) {
-              const cloned = cached.clone();
-              const blob = await cloned.blob();
+              const blob = await cached.blob();
               if (blob.size > 0) {
-                console.log('SW v10: Already cached:', url, 'size:', blob.size);
+                console.log('SW v11: Already cached:', url, 'size:', blob.size);
                 success++;
                 continue;
               }
@@ -177,29 +207,35 @@ self.addEventListener('message', (e) => {
 
             const res = await fetch(url);
             if (res && res.status === 200) {
-              // КЛОНИРУЕМ до проверки blob!
-              const resForCache = res.clone();
-              const resForCheck = res.clone();
-              const blob = await resForCheck.blob();
+              const blob = await res.blob();
               if (blob.size > 0) {
-                await cache.put(url, resForCache);
+                const mimeType = getMimeType(url);
+                const response = new Response(blob, {
+                  status: 200,
+                  statusText: 'OK',
+                  headers: {
+                    'Content-Type': mimeType,
+                    'Content-Length': blob.size.toString()
+                  }
+                });
+                await cache.put(url, response);
                 success++;
-                console.log('SW v10: Cached:', url, 'size:', blob.size);
+                console.log('SW v11: Cached:', url, 'size:', blob.size, 'type:', mimeType);
               } else {
                 failed++;
-                console.log('SW v10: Empty response:', url);
+                console.log('SW v11: Empty response:', url);
               }
             } else {
               failed++;
-              console.log('SW v10: Fetch failed:', url, res?.status);
+              console.log('SW v11: Fetch failed:', url, res?.status);
             }
           } catch (err) {
             failed++;
-            console.log('SW v10: Error:', url, err.message);
+            console.log('SW v11: Error:', url, err.message);
           }
         }
 
-        console.log(`SW v10: Done. Success: ${success}, Failed: ${failed}`);
+        console.log(`SW v11: Done. Success: ${success}, Failed: ${failed}`);
 
         if (e.source) {
           e.source.postMessage({
