@@ -1,4 +1,4 @@
-const CACHE_NAME = 'audio-gid-v7';
+const CACHE_NAME = 'audio-gid-v8';
 
 const URLS_TO_CACHE = [
   './',
@@ -6,6 +6,7 @@ const URLS_TO_CACHE = [
   './guide.html',
   './guide-style.css',
   './guide-app.js',
+  './content.json',
   './map.png',
   './manifest.json',
   './qr-codes.html'
@@ -26,7 +27,7 @@ const CONTENT_DATA = {
 
 // ========== INSTALL ==========
 self.addEventListener('install', (e) => {
-  console.log('SW v7: Installing...');
+  console.log('SW v8: Installing...');
   e.waitUntil(
     caches.open(CACHE_NAME).then(async (cache) => {
       for (const url of URLS_TO_CACHE) {
@@ -34,13 +35,16 @@ self.addEventListener('install', (e) => {
           const response = await fetch(url);
           if (response && response.status === 200) {
             await cache.put(url, response);
-            console.log('SW v7 install cached:', url);
+            console.log('SW v8 install cached:', url);
+          } else {
+            console.log('SW v8 install skip (status):', url, response?.status);
           }
         } catch (err) {
-          console.log('SW v7 install skip:', url, err.message);
+          console.log('SW v8 install skip (error):', url, err.message);
         }
       }
     }).then(() => {
+      console.log('SW v8: Install complete');
       self.skipWaiting();
     })
   );
@@ -48,19 +52,19 @@ self.addEventListener('install', (e) => {
 
 // ========== ACTIVATE ==========
 self.addEventListener('activate', (e) => {
-  console.log('SW v7: Activating...');
+  console.log('SW v8: Activating...');
   e.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((name) => {
           if (name !== CACHE_NAME) {
-            console.log('SW v7: Deleting old cache:', name);
+            console.log('SW v8: Deleting old cache:', name);
             return caches.delete(name);
           }
         })
       );
     }).then(() => {
-      console.log('SW v7: Activated');
+      console.log('SW v8: Activated');
       return self.clients.claim();
     })
   );
@@ -72,7 +76,7 @@ self.addEventListener('fetch', (e) => {
     caches.match(e.request).then((cachedResponse) => {
       // Если есть в кэше — отдаём из кэша
       if (cachedResponse) {
-        console.log('SW v7: Cache hit:', e.request.url);
+        console.log('SW v8: Cache hit:', e.request.url);
         return cachedResponse;
       }
 
@@ -87,7 +91,7 @@ self.addEventListener('fetch', (e) => {
         return networkResponse;
       }).catch((err) => {
         // Офлайн и нет в кэше
-        console.log('SW v7: Offline, not cached:', e.request.url);
+        console.log('SW v8: Offline, not cached:', e.request.url);
         return new Response('Not found', {
           status: 404,
           statusText: 'Not Found',
@@ -101,7 +105,7 @@ self.addEventListener('fetch', (e) => {
 // ========== MESSAGE (CACHE_ALL) ==========
 self.addEventListener('message', (e) => {
   if (e.data.type === 'CACHE_ALL') {
-    console.log('SW v7: CACHE_ALL started');
+    console.log('SW v8: CACHE_ALL started');
     e.waitUntil(
       caches.open(CACHE_NAME).then(async (cache) => {
         const urls = [];
@@ -121,7 +125,7 @@ self.addEventListener('message', (e) => {
               const cloned = cached.clone();
               const blob = await cloned.blob();
               if (blob.size > 0) {
-                console.log('SW v7: Already cached:', url, 'size:', blob.size);
+                console.log('SW v8: Already cached:', url, 'size:', blob.size);
                 success++;
                 continue;
               }
@@ -134,22 +138,22 @@ self.addEventListener('message', (e) => {
               if (blob.size > 0) {
                 await cache.put(url, res);
                 success++;
-                console.log('SW v7: Cached:', url, 'size:', blob.size);
+                console.log('SW v8: Cached:', url, 'size:', blob.size);
               } else {
                 failed++;
-                console.log('SW v7: Empty response:', url);
+                console.log('SW v8: Empty response:', url);
               }
             } else {
               failed++;
-              console.log('SW v7: Fetch failed:', url, res?.status);
+              console.log('SW v8: Fetch failed:', url, res?.status);
             }
           } catch (err) {
             failed++;
-            console.log('SW v7: Error:', url, err.message);
+            console.log('SW v8: Error:', url, err.message);
           }
         }
 
-        console.log(`SW v7: Done. Success: ${success}, Failed: ${failed}`);
+        console.log(`SW v8: Done. Success: ${success}, Failed: ${failed}`);
 
         if (e.source) {
           e.source.postMessage({

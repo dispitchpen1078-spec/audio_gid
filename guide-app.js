@@ -34,6 +34,7 @@ let userLocationCircle = null;
 let watchId = null;
 let routePolyline = null;
 let markers = [];
+let contentLoaded = false;
 
 // ==================== ЗАГРУЗКА КОНТЕНТА ====================
 async function loadContent() {
@@ -41,19 +42,29 @@ async function loadContent() {
     const res = await fetch("content.json");
     if (res.ok) {
       const data = await res.json();
-      if (data && data.points) {
+      if (data && data.points && Object.keys(data.points).length > 0) {
         CONTENT = data;
         console.log("Loaded content.json from server");
+      } else {
+        console.log("content.json empty, using default");
       }
+    } else {
+      console.log("content.json not found (status:", res.status, "), using default");
     }
   } catch (e) {
-    console.log("Using default content");
+    console.log("content.json load failed:", e.message, "— using default");
   }
+  contentLoaded = true;
 }
 
 // ==================== ИНИЦИАЛИЗАЦИЯ ====================
 document.addEventListener("DOMContentLoaded", async () => {
+  console.log("DOMContentLoaded started");
+
+  // Загружаем контент (с fallback на default)
   await loadContent();
+
+  console.log("Content loaded, initializing UI");
 
   const urlParams = new URLSearchParams(window.location.search);
   const pointId = urlParams.get("point");
@@ -72,15 +83,24 @@ document.addEventListener("DOMContentLoaded", async () => {
     hideSplash();
     showRouteSelect();
   }
+
+  console.log("Initialization complete");
 });
 
 function hideSplash() {
+  console.log("Hiding splash");
   const splash = document.getElementById("splashScreen");
-  if (splash) splash.style.display = "none";
+  if (splash) {
+    splash.style.display = "none";
+  } else {
+    console.log("splashScreen not found");
+  }
 }
 
 // ==================== ЭКРАН ВЫБОРА МАРШРУТА ====================
 function showRouteSelect(firstPointId) {
+  console.log("showRouteSelect called, firstPointId:", firstPointId);
+
   const routeSelect = document.getElementById("routeSelect");
   const guideScreen = document.getElementById("guideScreen");
   const mapScreen = document.getElementById("mapScreen");
@@ -91,7 +111,7 @@ function showRouteSelect(firstPointId) {
 
   const list = document.getElementById("route-list");
   if (!list) {
-    console.error("route-list not found!");
+    console.error("route-list element not found!");
     return;
   }
   list.innerHTML = "";
@@ -122,7 +142,7 @@ function showRouteSelect(firstPointId) {
 
   if (availableRoutes.length === 0) {
     list.innerHTML = `
-      <div class="route-item" style="text-align:center;">
+      <div class="route-item" style="text-align:center;padding:20px;">
         <h3>😕 Нет доступных маршрутов</h3>
         <p>Маршруты не настроены</p>
       </div>
@@ -137,6 +157,7 @@ function showRouteSelect(firstPointId) {
 
     const item = document.createElement("div");
     item.className = "route-item";
+    item.style.cursor = "pointer";
     item.innerHTML = `
       <h3>${route.name}</h3>
       <p>${route.description || ""}</p>
@@ -153,7 +174,7 @@ function showRouteSelect(firstPointId) {
   // Кнопка офлайн
   const offlineBtn = document.createElement("button");
   offlineBtn.className = "route-item";
-  offlineBtn.style.cssText = "background: #1e3a8a; border-color: #3b82f6; margin-top: 16px; cursor: pointer;";
+  offlineBtn.style.cssText = "background: #1e3a8a; border-color: #3b82f6; margin-top: 16px; cursor: pointer; width: 100%;";
   offlineBtn.innerHTML = `
     <h3>💾 Скачать маршруты для офлайн</h3>
     <p style="color: #93c5fd;">Все аудио и карта будут доступны без интернета</p>
@@ -163,6 +184,8 @@ function showRouteSelect(firstPointId) {
   `;
   offlineBtn.onclick = cacheForOffline;
   list.appendChild(offlineBtn);
+
+  console.log("Route select rendered, routes:", availableRoutes.length);
 }
 
 function showRouteSelectForRoute(routeId) {
@@ -227,7 +250,10 @@ function showGuide() {
 
 function loadPoint(pointId) {
   const point = CONTENT.points[pointId];
-  if (!point) return;
+  if (!point) {
+    console.error("Point not found:", pointId);
+    return;
+  }
 
   currentPointId = pointId;
 
@@ -571,7 +597,7 @@ function drawFullRoute() {
     L.marker([currentPoint.y, currentPoint.x], {
       icon: L.divIcon({
         className: 'current-point-marker',
-        html: `<div class="pulse-marker" style="background:#ef4444;color:#fff;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;border:3px solid #fff;box-shadow:0 0 0 0 rgba(239,68,68,0.4);animation:pulse-marker 2s infinite;">${currentPoint.icon}</div>`,
+        html: `<div style="background:#ef4444;color:#fff;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;border:3px solid #fff;box-shadow:0 0 0 0 rgba(239,68,68,0.4);animation:pulse-marker 2s infinite;">${currentPoint.icon}</div>`,
         iconSize: [36, 36],
         iconAnchor: [18, 18]
       }),
@@ -846,7 +872,7 @@ function showToast(message) {
   }, 3000);
 }
 
-// ==================== ГЛОБАЛНЫЕ ФУНКЦИИ ====================
+// ==================== ГЛОБАЛЬНЫЕ ФУНКЦИИ ====================
 window.scanQR = scanQR;
 window.stopCamera = stopCamera;
 window.togglePlay = togglePlay;
