@@ -1,144 +1,55 @@
-// ==================== ВСТРОЕННЫЕ ДАННЫЕ (GitHub Pages fallback) ====================
+// ==================== КОНФИГУРАЦИЯ ====================
+const CALORIES_PER_STEP = 0.05;
+const STEPS_PER_METER = 1.3;
+const MAP_BOUNDS = [[0, 0], [1200, 2000]]; // ← ЗАМЕНИТЕ НА РЕАЛЬНЫЙ РАЗМЕР map.png [высота, ширина]
+
+// ==================== ДАННЫЕ ====================
 const DEFAULT_CONTENT = {
   points: {
-    pool: { 
-      id: "pool", 
-      title: "Бассейн «Олимпийский»", 
-      description: "Открытый бассейн, построенный в 1985 году. Глубина от 1.2 до 2.5 метров. Работает с 7:00 до 22:00.", 
-      image: "images/1.jpg", 
-      audio: "audio/1.mp3", 
-      x: 1276, 
-      y: 142, 
-      icon: "🏊" 
-    },
-    building: { 
-      id: "building", 
-      title: "Главный корпус", 
-      description: "Центральное здание пансионата. Здесь находится ресепшн, столовая и конференц-зал.", 
-      image: "images/2.jpg", 
-      audio: "audio/2.mp3", 
-      x: 1181, 
-      y: 817, 
-      icon: "🏢" 
-    },
-    cafe: { 
-      id: "cafe", 
-      title: "Кафе «Лесная поляна»", 
-      description: "Уютное кафе с видом на парк. Открыто с 8:00 до 23:00. Домашняя выпечка и свежий кофе.", 
-      image: "images/3.jpg", 
-      audio: "audio/3.mp3", 
-      x: 719, 
-      y: 756, 
-      icon: "☕" 
-    },
-    playground: { 
-      id: "playground", 
-      title: "Детская площадка", 
-      description: "Современная игровая зона для детей от 3 до 12 лет. Качели, горки, песочница.", 
-      image: "images/4.jpg", 
-      audio: "audio/4.mp3", 
-      x: 124, 
-      y: 701, 
-      icon: "🎠" 
-    },
-    campfire: { 
-      id: "campfire", 
-      title: "Зона отдыха у костра", 
-      description: "Оборудованная площадка для вечерних посиделок у костра. Дрова предоставляются.", 
-      image: "images/5.jpg", 
-      audio: "audio/5.mp3", 
-      x: 1127, 
-      y: 447, 
-      icon: "🔥" 
-    },
-    gym: { 
-      id: "gym", 
-      title: "Тренажёрный зал", 
-      description: "Фитнес-зал с современным оборудованием. Открыт круглосуточно для проживающих.", 
-      image: "images/6.jpg", 
-      audio: "audio/6.mp3", 
-      x: 1551, 
-      y: 438, 
-      icon: "💪" 
-    },
-    tennis: { 
-      id: "tennis", 
-      title: "Теннисный корт", 
-      description: "Профессиональное покрытие. Ракетки и мячи выдаются бесплатно.", 
-      image: "images/7.jpg", 
-      audio: "audio/7.mp3", 
-      x: 1018, 
-      y: 746, 
-      icon: "🎾" 
-    },
-    football: { 
-      id: "football", 
-      title: "Футбольное поле", 
-      description: "Стандартное футбольное поле с искусственным газоном. Ворота и мячи на месте.", 
-      image: "images/8.jpg", 
-      audio: "audio/8.mp3", 
-      x: 170, 
-      y: 904, 
-      icon: "⚽" 
-    },
-    point_1783670488368: { 
-      id: "point_1783670488368", 
-      title: "Парк", 
-      description: "Большой парк Звёздного", 
-      image: "", 
-      audio: "", 
-      x: 596, 
-      y: 758, 
-      icon: "📍" 
-    }
+    pool: { id: "pool", title: "Бассейн «Олимпийский»", description: "Олимпийский бассейн с подогреваемой водой.", image: "images/1.jpg", audio: "audio/1.mp3", x: 1276, y: 142, icon: "🏊" },
+    building: { id: "building", title: "Главный корпус", description: "Главный корпус пансионата.", image: "images/2.jpg", audio: "audio/2.mp3", x: 1100, y: 300, icon: "🏢" },
+    cafe: { id: "cafe", title: "Кафе", description: "Уютное кафе с домашней кухней.", image: "images/3.jpg", audio: "audio/3.mp3", x: 900, y: 500, icon: "☕" },
+    playground: { id: "playground", title: "Детская площадка", description: "Детская площадка с качелями и горками.", image: "images/4.jpg", audio: "audio/4.mp3", x: 700, y: 700, icon: "🎠" },
+    campfire: { id: "campfire", title: "Площадка для костра", description: "Место для вечерних посиделок у костра.", image: "images/5.jpg", audio: "audio/5.mp3", x: 500, y: 900, icon: "🔥" },
+    gym: { id: "gym", title: "Тренажёрный зал", description: "Современный тренажёрный зал.", image: "images/6.jpg", audio: "audio/6.mp3", x: 300, y: 1100, icon: "💪" },
+    tennis: { id: "tennis", title: "Теннисный корт", description: "Теннисный корт с профессиональным покрытием.", image: "images/7.jpg", audio: "audio/7.mp3", x: 200, y: 1300, icon: "🎾" },
+    football: { id: "football", title: "Футбольное поле", description: "Футбольное поле с искусственным газоном.", image: "images/8.jpg", audio: "audio/8.mp3", x: 100, y: 1500, icon: "⚽" }
   },
   routes: {
-    qwerty: { 
-      name: "Короткий Маршрут", 
-      description: "20 минут, 1000 шагов", 
-      points: ["cafe", "point_1783670488368", "playground", "football"], 
-      waypoints: [[{x:659,y:755}],[{x:380,y:761},{x:192,y:759}],[{x:124,y:832},{x:140,y:875}]] 
-    },
-    qwerty1: { 
-      name: "Длинный маршрут", 
-      description: "30 минут, 3000 шагов", 
-      points: ["cafe", "tennis", "building", "gym", "pool", "campfire", "point_1783670488368", "playground", "football"], 
-      waypoints: [[{x:864,y:755}],[{x:1091,y:779}],[{x:1192,y:451},{x:1249,y:405}],[{x:1496,y:310},{x:1405,y:252},{x:1306,y:178}],[{x:1221,y:216},{x:1515,y:333},{x:1477,y:385},{x:1184,y:399},{x:1129,y:403},{x:1103,y:406},{x:1076,y:428},{x:1077,y:452}],[{x:1116,y:669}],[{x:221,y:762}],[{x:126,y:814}]] 
-    }
+    qwerty: { name: "Короткий маршрут", description: "Обзорная экскурсия по основным точкам", points: ["pool", "building", "cafe", "playground"] },
+    qwerty1: { name: "Длинный маршрут", description: "Полная экскурсия по всем точкам", points: ["pool", "building", "cafe", "playground", "campfire", "gym", "tennis", "football"] }
   }
 };
 
-// Принудительно обновляем Service Worker
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.getRegistrations().then(registrations => {
-    registrations.forEach(reg => {
-      console.log('Unregistering old SW:', reg.scope);
-      reg.unregister();
-    });
-    // Регистрируем заново
-    navigator.serviceWorker.register('sw.js').then(reg => {
-      console.log('SW registered:', reg.scope);
-    });
-  });
-}
-
-// ==================== КОНФИГУРАЦИЯ ====================
-const MAP_SCALE_METERS_PER_PIXEL = 0.26;
-const STEPS_PER_METER = 1.3;
-const CALORIES_PER_STEP = 0.05;
-const MAP_BOUNDS = [[0, 0], [1080, 1920]];
-
-// ==================== СОСТОЯНИЕ ====================
+// ==================== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ====================
 let CONTENT = DEFAULT_CONTENT;
 let currentRoute = null;
-let currentPointIndex = -1;
+let currentPointIndex = 0;
 let currentPointId = null;
-let visitedPoints = new Set();
 let audio = null;
-let map = null;
-let routeLayer = null;
-let markers = {};
 let audioCache = {};
+let map = null;
+let userLocationMarker = null;
+let userLocationCircle = null;
+let watchId = null;
+let routePolyline = null;
+let markers = [];
+
+// ==================== ЗАГРУЗКА КОНТЕНТА ====================
+async function loadContent() {
+  try {
+    const res = await fetch("content.json");
+    if (res.ok) {
+      const data = await res.json();
+      if (data && data.points) {
+        CONTENT = data;
+        console.log("Loaded content.json from server");
+      }
+    }
+  } catch (e) {
+    console.log("Using default content");
+  }
+}
 
 // ==================== ИНИЦИАЛИЗАЦИЯ ====================
 document.addEventListener("DOMContentLoaded", async () => {
@@ -149,26 +60,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   const routeId = urlParams.get("route");
 
   if (pointId && CONTENT.points[pointId]) {
+    hideSplash();
     currentPointId = pointId;
-    const isFirstPointOfAnyRoute = isFirstPoint(pointId);
-
-    if (isFirstPointOfAnyRoute && !routeId) {
-      hideSplash();
-      showRouteSelect(pointId);
-    } else if (routeId && CONTENT.routes[routeId]) {
-      currentRoute = routeId;
-      const route = CONTENT.routes[currentRoute];
-      currentPointIndex = route.points.indexOf(pointId);
-      visitedPoints.add(pointId);
-      saveVisitedPoints();
-      hideSplash();
-      showGuide();
-      loadPoint(pointId);
-    } else {
-      hideSplash();
-      showGuide();
-      loadPoint(pointId);
-    }
+    showGuideFromMap();
+    loadPoint(pointId);
   } else if (routeId && CONTENT.routes[routeId]) {
     currentRoute = routeId;
     hideSplash();
@@ -179,46 +74,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 });
 
-async function loadContent() {
-  try {
-    const res = await fetch("content.json");
-    if (res.ok) {
-      const data = await res.json();
-      if (data.points && Object.keys(data.points).length > 0) {
-        CONTENT = data;
-        console.log("Loaded content.json from server");
-      } else {
-        CONTENT = DEFAULT_CONTENT;
-      }
-    } else {
-      console.log("Server returned", res.status, "- using embedded data");
-      CONTENT = DEFAULT_CONTENT;
-    }
-  } catch (e) {
-    console.log("Using embedded data:", e.message);
-    CONTENT = DEFAULT_CONTENT;
-  }
-  const saved = localStorage.getItem("visitedPoints");
-  if (saved) visitedPoints = new Set(JSON.parse(saved));
-}
-
-function saveVisitedPoints() {
-  localStorage.setItem("visitedPoints", JSON.stringify([...visitedPoints]));
-}
-
-function isFirstPoint(pointId) {
-  for (const route of Object.values(CONTENT.routes || {})) {
-    if (route.points && route.points[0] === pointId) return true;
-  }
-  return false;
-}
-
 function hideSplash() {
-  const splash = document.getElementById("splash");
+  const splash = document.getElementById("splashScreen");
   if (splash) splash.style.display = "none";
 }
 
-// ==================== ВЫБОР МАРШРУТА ====================
+// ==================== ЭКРАН ВЫБОРА МАРШРУТА ====================
 function showRouteSelect(firstPointId) {
   const routeSelect = document.getElementById("routeSelect");
   const guideScreen = document.getElementById("guideScreen");
@@ -234,10 +95,14 @@ function showRouteSelect(firstPointId) {
     return;
   }
   list.innerHTML = "";
-  // ... остальное
-}
 
-  // Заголовок
+  const availableRoutes = [];
+  Object.entries(CONTENT.routes || {}).forEach(([id, route]) => {
+    if (!firstPointId || (route.points && route.points[0] === firstPointId)) {
+      availableRoutes.push({ id, route });
+    }
+  });
+
   const header = document.querySelector(".route-header");
   if (header) {
     if (firstPointId && CONTENT.points[firstPointId]) {
@@ -298,215 +163,140 @@ function showRouteSelect(firstPointId) {
   `;
   offlineBtn.onclick = cacheForOffline;
   list.appendChild(offlineBtn);
-
-  const offlineBtn = document.createElement("button");
-  offlineBtn.className = "route-item";
-  offlineBtn.style.cssText = "background: #1e3a8a; border-color: #3b82f6; margin-top: 16px; cursor: pointer;";
-  offlineBtn.innerHTML = `
-    <h3>💾 Скачать маршруты для офлайн</h3>
-    <p style="color: #93c5fd;">Все аудио и карта будут доступны без интернета</p>
-    <div class="route-meta">
-      <span>📦 Кэширование контента</span>
-    </div>
-  `;
-  offlineBtn.onclick = cacheForOffline;
-  list.appendChild(offlineBtn);
-
+}
 
 function showRouteSelectForRoute(routeId) {
   const route = CONTENT.routes[routeId];
-  if (route && route.points.length > 0) {
+  if (route && route.points && route.points.length > 0) {
     showRouteSelect(route.points[0]);
   } else {
-    showRouteSelect(); // ← без параметра, покажет все
+    showRouteSelect();
   }
 }
 
+// ==================== МАРШРУТ ====================
 function startRoute(routeId, firstPointId) {
   currentRoute = routeId;
   currentPointIndex = 0;
   currentPointId = firstPointId;
-  visitedPoints.add(firstPointId);
-  saveVisitedPoints();
-  localStorage.setItem("currentRoute", routeId);
-  localStorage.setItem("currentPointId", firstPointId);
+
+  const routeSelect = document.getElementById("routeSelect");
+  if (routeSelect) routeSelect.style.display = "none";
 
   showGuide();
   loadPoint(firstPointId);
-}
-
-async function cacheForOffline() {
-  if (!("serviceWorker" in navigator)) {
-    showToast("⚠️ Ваш браузер не поддерживает офлайн-режим");
-    return;
-  }
-  
-  showToast("📦 Кэширование начато...");
-  
-  try {
-    const reg = await navigator.serviceWorker.ready;
-    if (!reg.active) {
-      showToast("⚠️ Service Worker не активен. Перезагрузите страницу.");
-      return;
-    }
-    
-    // Простой postMessage без MessageChannel (Safari поддерживает)
-    reg.active.postMessage({ type: "CACHE_ALL" });
-    
-    // Показываем результат через таймаут, т.к. Safari не ждёт ответа
-    setTimeout(() => {
-      showToast("✅ Контент сохранён для офлайн!");
-    }, 2000);
-    
-  } catch (e) {
-    console.error('cacheForOffline error:', e);
-    showToast("⚠️ Ошибка: " + e.message);
-  }
-}
-
-// ==================== ГЛАВНЫЙ ЭКРАН ====================
-function showGuide() {
-  const routeSelect = document.getElementById("routeSelect");
-  const guideScreen = document.getElementById("guideScreen");
-  const mapScreen = document.getElementById("mapScreen");
-
-  if (routeSelect) routeSelect.style.display = "none";
-  if (guideScreen) guideScreen.style.display = "flex";
-  if (mapScreen) mapScreen.style.display = "none";
-  document.body.style.overflow = "auto";
-}
-
-function loadPoint(pointId) {
-  const point = CONTENT.points[pointId];
-  if (!point) return;
-
-  const pointImage = document.getElementById("pointImage");
-  const pointIcon = document.getElementById("pointIcon");
-  const pointNumber = document.getElementById("pointNumber");
-  const pointTitle = document.getElementById("pointTitle");
-  const pointDesc = document.getElementById("pointDesc");
-  const routeBadge = document.getElementById("routeBadge");
-  const pointCounter = document.getElementById("pointCounter");
-
-  if (pointImage) {
-    if (point.image) {
-      pointImage.src = point.image;
-      pointImage.style.display = "";
-    } else {
-      pointImage.style.display = "none";
-    }
-  }
-  if (pointIcon) pointIcon.textContent = point.icon || "📍";
-  if (pointNumber) pointNumber.textContent = currentPointIndex + 1;
-  if (pointTitle) pointTitle.textContent = point.title || "Без названия";
-  if (pointDesc) pointDesc.textContent = point.description || "";
-
-  const route = CONTENT.routes[currentRoute];
-  if (routeBadge) routeBadge.textContent = route?.name || "Маршрут";
-  if (pointCounter) pointCounter.textContent = `${currentPointIndex + 1} / ${route?.points?.length || 0}`;
-
-  updateStats();
-  initAudio(point.audio);
-  updateNextPointSection();
-}
-
-function updateStats() {
-  const route = CONTENT.routes[currentRoute];
-  if (!route || currentPointIndex < 0) return;
-
-  let totalDistance = 0;
-  for (let i = 0; i < currentPointIndex; i++) {
-    totalDistance += getSegmentDistance(route, i);
-  }
-
-  const steps = Math.round(totalDistance * STEPS_PER_METER);
-  const calories = Math.round(steps * CALORIES_PER_STEP);
-
-  const statMeters = document.getElementById("statMeters");
-  const statSteps = document.getElementById("statSteps");
-  const statCalories = document.getElementById("statCalories");
-
-  if (statMeters) statMeters.textContent = Math.round(totalDistance);
-  if (statSteps) statSteps.textContent = steps;
-  if (statCalories) statCalories.textContent = calories;
-}
-
-function getSegmentDistance(route, segmentIndex) {
-  const fromId = route.points[segmentIndex];
-  const toId = route.points[segmentIndex + 1];
-  const from = CONTENT.points[fromId];
-  const to = CONTENT.points[toId];
-  if (!from || !to) return 0;
-
-  const waypoints = route.waypoints?.[segmentIndex] || [];
-  let dist = 0;
-  let prev = { x: from.x, y: from.y };
-
-  for (const wp of waypoints) {
-    dist += Math.sqrt((wp.x - prev.x) ** 2 + (wp.y - prev.y) ** 2) * MAP_SCALE_METERS_PER_PIXEL;
-    prev = wp;
-  }
-
-  dist += Math.sqrt((to.x - prev.x) ** 2 + (to.y - prev.y) ** 2) * MAP_SCALE_METERS_PER_PIXEL;
-  return dist;
 }
 
 function calculateRouteDistance(route) {
   if (!route.points || route.points.length < 2) return 0;
   let total = 0;
   for (let i = 0; i < route.points.length - 1; i++) {
-    total += getSegmentDistance(route, i);
+    const p1 = CONTENT.points[route.points[i]];
+    const p2 = CONTENT.points[route.points[i + 1]];
+    if (p1 && p2) {
+      const dx = p2.x - p1.x;
+      const dy = p2.y - p1.y;
+      total += Math.sqrt(dx * dx + dy * dy);
+    }
   }
   return total;
 }
 
-function updateNextPointSection() {
+function getDistanceToNext() {
+  if (!currentRoute || !CONTENT.routes[currentRoute]) return 0;
   const route = CONTENT.routes[currentRoute];
-  if (!route) return;
-
-  const nextIndex = currentPointIndex + 1;
-  const hasNext = nextIndex < route.points.length;
-
-  const section = document.getElementById("nextPointSection");
-  const qrSection = document.getElementById("qrScanSection");
-
-  if (!hasNext) {
-    if (section) {
-      section.innerHTML = `
-        <div style="text-align:center;padding:20px;">
-          <div style="font-size:48px;margin-bottom:12px;">🎉</div>
-          <h3 style="color:#fff;margin-bottom:8px;">Маршрут завершён!</h3>
-          <p style="color:#94a3b8;font-size:14px;">Вы посетили все точки</p>
-          <button class="next-point-btn" onclick="location.reload()" style="margin-top:16px;background:#3b82f6;">
-            <span>🔄 Начать заново</span>
-          </button>
-        </div>
-      `;
-    }
-    if (qrSection) qrSection.style.display = "none";
-    return;
-  }
-
-  const nextPointId = route.points[nextIndex];
-  const nextPoint = CONTENT.points[nextPointId];
-  const distance = getSegmentDistance(route, currentPointIndex);
-
-  const nextPointName = document.getElementById("nextPointName");
-  const nextPointDistance = document.getElementById("nextPointDistance");
-  const nextPointBtn = document.getElementById("nextPointBtn");
-
-  if (nextPointName) nextPointName.textContent = nextPoint?.title || "Следующая точка";
-  if (nextPointDistance) nextPointDistance.textContent = `${Math.round(distance)} м`;
-
-  if (qrSection) qrSection.style.display = "block";
-  if (nextPointBtn) nextPointBtn.onclick = () => showRouteToNext();
+  if (currentPointIndex >= route.points.length - 1) return 0;
+  const current = CONTENT.points[route.points[currentPointIndex]];
+  const next = CONTENT.points[route.points[currentPointIndex + 1]];
+  if (!current || !next) return 0;
+  const dx = next.x - current.x;
+  const dy = next.y - current.y;
+  return Math.round(Math.sqrt(dx * dx + dy * dy));
 }
 
-// ==================== АУДИОПЛЕЕР ====================
+// ==================== ГИД ====================
+function showGuide() {
+  const guideScreen = document.getElementById("guideScreen");
+  const routeSelect = document.getElementById("routeSelect");
+  const mapScreen = document.getElementById("mapScreen");
+
+  if (guideScreen) guideScreen.style.display = "block";
+  if (routeSelect) routeSelect.style.display = "none";
+  if (mapScreen) mapScreen.style.display = "none";
+}
+
+function loadPoint(pointId) {
+  const point = CONTENT.points[pointId];
+  if (!point) return;
+
+  currentPointId = pointId;
+
+  const titleEl = document.getElementById("pointTitle");
+  const descEl = document.getElementById("pointDescription");
+  const pointImage = document.getElementById("pointImage");
+  const distanceEl = document.getElementById("distanceValue");
+  const stepsEl = document.getElementById("stepsValue");
+  const caloriesEl = document.getElementById("caloriesValue");
+  const routeNameEl = document.getElementById("routeName");
+  const progressEl = document.getElementById("routeProgress");
+
+  if (titleEl) titleEl.textContent = point.title;
+  if (descEl) descEl.textContent = point.description || "";
+
+  if (pointImage) {
+    if (point.image) {
+      pointImage.src = point.image;
+      pointImage.style.display = "";
+      pointImage.onerror = () => {
+        pointImage.style.display = "none";
+      };
+    } else {
+      pointImage.style.display = "none";
+    }
+  }
+
+  const dist = getDistanceToNext();
+  if (distanceEl) distanceEl.textContent = dist + " м";
+  if (stepsEl) stepsEl.textContent = Math.round(dist * STEPS_PER_METER);
+  if (caloriesEl) caloriesEl.textContent = Math.round(dist * STEPS_PER_METER * CALORIES_PER_STEP);
+
+  if (routeNameEl && currentRoute) {
+    routeNameEl.textContent = CONTENT.routes[currentRoute]?.name || "";
+  }
+
+  if (progressEl && currentRoute) {
+    const route = CONTENT.routes[currentRoute];
+    const progress = route.points ? ((currentPointIndex + 1) / route.points.length * 100) : 0;
+    progressEl.style.width = progress + "%";
+  }
+
+  initAudio(point.audio);
+}
+
+function nextPoint() {
+  if (!currentRoute || !CONTENT.routes[currentRoute]) return;
+  const route = CONTENT.routes[currentRoute];
+  if (currentPointIndex < route.points.length - 1) {
+    currentPointIndex++;
+    loadPoint(route.points[currentPointIndex]);
+  } else {
+    showToast("🎉 Маршрут завершён!");
+  }
+}
+
+function prevPoint() {
+  if (!currentRoute || !CONTENT.routes[currentRoute]) return;
+  const route = CONTENT.routes[currentRoute];
+  if (currentPointIndex > 0) {
+    currentPointIndex--;
+    loadPoint(route.points[currentPointIndex]);
+  }
+}
+
+// ==================== АУДИО ====================
 function initAudio(audioUrl) {
   console.log("initAudio(), audioUrl:", audioUrl);
-  
-  // Сбрасываем старое аудио
+
   if (audio) {
     audio.pause();
     audio.currentTime = 0;
@@ -529,10 +319,8 @@ function initAudio(audioUrl) {
     return;
   }
 
-  // Проверяем кэш — но только если файл реально загрузился раньше
   if (audioCache[audioUrl]) {
     const cached = audioCache[audioUrl];
-    // Проверяем, что кэшированное аудио валидное
     if (!cached.error && cached.duration > 0) {
       console.log("Using cached audio");
       audio = cached;
@@ -553,52 +341,16 @@ function initAudio(audioUrl) {
   window.currentAudioUrl = audioUrl;
 }
 
-function setupAudioEvents(audioObj) {
-  audioObj.addEventListener("timeupdate", () => {
-    if (!audioObj.duration) return;
-    const pct = (audioObj.currentTime / audioObj.duration) * 100;
-    const progressFill = document.getElementById("audioProgressFill");
-    const currentEl = document.getElementById("audioCurrent");
-    if (progressFill) progressFill.style.width = pct + "%";
-    if (currentEl) currentEl.textContent = formatTime(audioObj.currentTime);
-  });
-  
-  // Важно: при окончании сбрасываем кнопку на ▶️
-  audioObj.addEventListener("ended", () => {
-    console.log("Audio ended");
-    const playBtn = document.getElementById("playPauseBtn");
-    if (playBtn) playBtn.textContent = "▶️";
-    showToast("🎧 Аудиогид завершён!");
-  });
-  
-  audioObj.addEventListener("error", (e) => {
-    console.error("Audio error:", e);
-    const playBtn = document.getElementById("playPauseBtn");
-    if (playBtn) playBtn.textContent = "❌";
-    showToast("❌ Ошибка аудио");
-  });
-  
-  const progressBar = document.getElementById("audioProgressBar");
-  if (progressBar) {
-    progressBar.onclick = (e) => {
-      if (!audioObj || !audioObj.duration) return;
-      const rect = e.currentTarget.getBoundingClientRect();
-      const pct = (e.clientX - rect.left) / rect.width;
-      audioObj.currentTime = pct * audioObj.duration;
-    };
-  }
-}
-
 function togglePlay() {
   const audioUrl = window.currentAudioUrl;
   console.log("togglePlay(), audioUrl:", audioUrl, "audio exists:", !!audio, "audio.paused:", audio?.paused);
-  
+
   if (!audioUrl) {
     console.log("No audioUrl, returning");
     return;
   }
 
-  // Если аудио есть, но битое (ошибка загрузки) — сбрасываем
+  // Если аудио есть, но битое — сбрасываем
   if (audio && audio.error) {
     console.log("Audio has error, resetting");
     audio = null;
@@ -620,9 +372,8 @@ function togglePlay() {
     if (playPromise !== undefined) {
       playPromise.catch(err => {
         console.error("Play failed:", err);
-        // Если play не удался — аудио битое, создаём заново
         audio = null;
-        togglePlay(); // рекурсивно создаём новое
+        togglePlay();
       });
     }
     const playBtn = document.getElementById("playPauseBtn");
@@ -661,8 +412,8 @@ function togglePlay() {
     let msg = "❌ Ошибка аудио";
     if (code === 2) msg = "❌ Сетевая ошибка";
     if (code === 3) msg = "❌ Формат не поддерживается";
-    if (code === 4) msg = "❌ Файл не найден (проверьте офлайн-кэш)";
-    
+    if (code === 4) msg = "❌ Файл не найден";
+
     const playBtn = document.getElementById("playPauseBtn");
     const durationEl = document.getElementById("audioDuration");
     if (playBtn) playBtn.textContent = "❌";
@@ -673,7 +424,7 @@ function togglePlay() {
   // Когда готово к воспроизведению
   audio.addEventListener("canplaythrough", () => {
     console.log("Audio canplaythrough, duration:", audio.duration);
-    
+
     if (!audio.duration || isNaN(audio.duration)) {
       console.error("Audio has invalid duration");
       const playBtn = document.getElementById("playPauseBtn");
@@ -681,7 +432,7 @@ function togglePlay() {
       showToast("❌ Ошибка загрузки аудио");
       return;
     }
-    
+
     audioCache[audioUrl] = audio;
     const durationEl = document.getElementById("audioDuration");
     const playBtn = document.getElementById("playPauseBtn");
@@ -694,351 +445,235 @@ function togglePlay() {
   audio.load();
 }
 
-  // Аудио уже загружено — play/pause
-  if (audio.paused) {
-    console.log("Playing existing audio");
-    audio.play();
-    const playBtn = document.getElementById("playPauseBtn");
-    if (playBtn) playBtn.textContent = "⏸️";
-  } else {
-    console.log("Pausing existing audio");
-    audio.pause();
+function setupAudioEvents(audioObj) {
+  audioObj.addEventListener("timeupdate", () => {
+    if (!audioObj.duration) return;
+    const pct = (audioObj.currentTime / audioObj.duration) * 100;
+    const progressFill = document.getElementById("audioProgressFill");
+    const currentEl = document.getElementById("audioCurrent");
+    if (progressFill) progressFill.style.width = pct + "%";
+    if (currentEl) currentEl.textContent = formatTime(audioObj.currentTime);
+  });
+
+  audioObj.addEventListener("ended", () => {
+    console.log("Audio ended");
     const playBtn = document.getElementById("playPauseBtn");
     if (playBtn) playBtn.textContent = "▶️";
-  }
-
-function seekAudio(seconds) {
-  if (!audio) return;
-  audio.currentTime = Math.max(0, Math.min(audio.duration || 0, audio.currentTime + seconds));
-}
-
-function setSpeed(speed) {
-  if (!audio) return;
-  audio.playbackRate = speed;
-  document.querySelectorAll(".speed-btn").forEach(btn => {
-    btn.classList.toggle("active", parseFloat(btn.dataset.speed) === speed);
+    showToast("🎧 Аудиогид завершён!");
   });
+
+  audioObj.addEventListener("error", (e) => {
+    console.error("Audio error:", e);
+    const playBtn = document.getElementById("playPauseBtn");
+    if (playBtn) playBtn.textContent = "❌";
+    showToast("❌ Ошибка аудио");
+  });
+
+  const progressBar = document.getElementById("audioProgressBar");
+  if (progressBar) {
+    progressBar.onclick = (e) => {
+      if (!audioObj || !audioObj.duration) return;
+      const rect = e.currentTarget.getBoundingClientRect();
+      const pct = (e.clientX - rect.left) / rect.width;
+      audioObj.currentTime = pct * audioObj.duration;
+    };
+  }
 }
 
-function formatTime(sec) {
-  if (!sec || isNaN(sec)) return "0:00";
-  const m = Math.floor(sec / 60);
-  const s = Math.floor(sec % 60);
-  return `${m}:${s.toString().padStart(2, "0")}`;
+function formatTime(seconds) {
+  if (!seconds || isNaN(seconds)) return "0:00";
+  const m = Math.floor(seconds / 60);
+  const s = Math.floor(seconds % 60);
+  return m + ":" + (s < 10 ? "0" : "") + s;
 }
 
 // ==================== КАРТА ====================
-function showRouteToNext() {
-  const route = CONTENT.routes[currentRoute];
-  if (!route) return;
-
-  const nextIndex = currentPointIndex + 1;
-  if (nextIndex >= route.points.length) return;
-
-  const nextPointId = route.points[nextIndex];
-  const nextPoint = CONTENT.points[nextPointId];
-
-  const mapTitle = document.getElementById("mapTitle");
-  const mapInstruction = document.getElementById("mapInstruction");
-
-  if (mapTitle) mapTitle.textContent = `Путь к: ${nextPoint?.title || "следующая"}`;
-  if (mapInstruction) mapInstruction.innerHTML = `Идите по <b>зелёной линии</b> к «${nextPoint?.title || "следующая"}»`;
-
-  const guideScreen = document.getElementById("guideScreen");
-  const mapScreen = document.getElementById("mapScreen");
-
-  if (guideScreen) guideScreen.style.display = "none";
-  if (mapScreen) mapScreen.style.display = "flex";
-
-  setTimeout(() => {
-    initMap();
-    drawRouteToNext();
-  }, 100);
-}
-
 function showMap() {
-  const mapTitle = document.getElementById("mapTitle");
-  const mapInstruction = document.getElementById("mapInstruction");
-
-  if (mapTitle) mapTitle.textContent = "Маршрут";
-  if (mapInstruction) mapInstruction.textContent = "Красная — вы здесь. Зелёная — следующая.";
-
-  const guideScreen = document.getElementById("guideScreen");
   const mapScreen = document.getElementById("mapScreen");
+  const guideScreen = document.getElementById("guideScreen");
 
+  if (mapScreen) mapScreen.style.display = "block";
   if (guideScreen) guideScreen.style.display = "none";
-  if (mapScreen) mapScreen.style.display = "flex";
 
   setTimeout(() => {
     initMap();
     drawFullRoute();
+    startTrackingLocation();
   }, 100);
 }
 
 function showGuideFromMap() {
+  stopTrackingLocation();
   const mapScreen = document.getElementById("mapScreen");
   const guideScreen = document.getElementById("guideScreen");
 
   if (mapScreen) mapScreen.style.display = "none";
-  if (guideScreen) guideScreen.style.display = "flex";
-
-  if (map) {
-    map.remove();
-    map = null;
-  }
+  if (guideScreen) guideScreen.style.display = "block";
 }
 
 function initMap() {
   if (map) {
-    map.remove();
-    map = null;
+    map.invalidateSize();
+    return;
   }
 
-  map = L.map("map", { crs: L.CRS.Simple, zoomControl: false, minZoom: -4, maxZoom: 2, attributionControl: false });
+  const mapContainer = document.getElementById("mapContainer");
+  if (!mapContainer) return;
+
+  map = L.map("mapContainer", {
+    crs: L.CRS.Simple,
+    minZoom: -2,
+    maxZoom: 4,
+    zoomControl: false,
+    attributionControl: false
+  });
+
   L.imageOverlay("map.png", MAP_BOUNDS).addTo(map);
   map.fitBounds(MAP_BOUNDS, { padding: [40, 40] });
-}
 
-function drawRouteToNext() {
-  if (routeLayer) {
-    map.removeLayer(routeLayer);
-    routeLayer = null;
-  }
+  // Добавляем маркеры точек
+  Object.values(CONTENT.points).forEach(point => {
+    const marker = L.marker([point.y, point.x], {
+      icon: L.divIcon({
+        className: 'custom-marker',
+        html: `<div style="background:#3b82f6;color:#fff;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.3);">${point.icon}</div>`,
+        iconSize: [32, 32],
+        iconAnchor: [16, 16]
+      })
+    }).addTo(map);
 
-  const route = CONTENT.routes[currentRoute];
-  const fromId = route.points[currentPointIndex];
-  const toId = route.points[currentPointIndex + 1];
-  const from = CONTENT.points[fromId];
-  const to = CONTENT.points[toId];
-
-  if (!from || !to) return;
-
-  const latlngs = [[from.y, from.x]];
-  const waypoints = route.waypoints?.[currentPointIndex] || [];
-  waypoints.forEach(wp => latlngs.push([wp.y, wp.x]));
-  latlngs.push([to.y, to.x]);
-
-  routeLayer = L.polyline(latlngs, { 
-    color: "#10b981", 
-    weight: 6, 
-    opacity: 0.9,
-    lineCap: "round",
-    lineJoin: "round"
-  }).addTo(map);
-
-  addArrowsToPath(latlngs, "#10b981");
-
-  const currentIcon = L.divIcon({ 
-    className: "current-point-marker", 
-    html: from.icon || "📍", 
-    iconSize: [40, 40], 
-    iconAnchor: [20, 20] 
+    marker.bindPopup(`<b>${point.title}</b>`);
+    marker.on('click', () => {
+      currentPointId = point.id;
+      showGuideFromMap();
+      loadPoint(point.id);
+    });
+    markers.push(marker);
   });
-  L.marker([from.y, from.x], { icon: currentIcon, zIndexOffset: 1000 }).addTo(map);
-
-  const nextIcon = L.divIcon({ 
-    className: "next-point-marker", 
-    html: to.icon || "📍", 
-    iconSize: [36, 36], 
-    iconAnchor: [18, 18] 
-  });
-  L.marker([to.y, to.x], { icon: nextIcon, zIndexOffset: 900 }).addTo(map);
-
-  map.fitBounds(latlngs, { padding: [80, 80] });
 }
 
 function drawFullRoute() {
-  if (routeLayer) {
-    map.removeLayer(routeLayer);
-    routeLayer = null;
-  }
-
+  if (!currentRoute || !CONTENT.routes[currentRoute]) return;
   const route = CONTENT.routes[currentRoute];
-  if (!route) return;
+  if (!route.points || route.points.length < 2) return;
 
-  const latlngs = [];
+  const latlngs = route.points.map(id => {
+    const p = CONTENT.points[id];
+    return p ? [p.y, p.x] : null;
+  }).filter(Boolean);
 
-  for (let i = 0; i < route.points.length; i++) {
-    const pt = CONTENT.points[route.points[i]];
-    if (!pt) continue;
-    latlngs.push([pt.y, pt.x]);
+  if (routePolyline) map.removeLayer(routePolyline);
+  routePolyline = L.polyline(latlngs, { color: '#3b82f6', weight: 4, opacity: 0.8 }).addTo(map);
 
-    if (i < route.points.length - 1) {
-      const waypoints = route.waypoints?.[i] || [];
-      waypoints.forEach(wp => latlngs.push([wp.y, wp.x]));
-    }
+  // Подсветка текущей точки
+  const currentPoint = CONTENT.points[route.points[currentPointIndex]];
+  if (currentPoint) {
+    L.marker([currentPoint.y, currentPoint.x], {
+      icon: L.divIcon({
+        className: 'current-point-marker',
+        html: `<div class="pulse-marker" style="background:#ef4444;color:#fff;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;border:3px solid #fff;box-shadow:0 0 0 0 rgba(239,68,68,0.4);animation:pulse-marker 2s infinite;">${currentPoint.icon}</div>`,
+        iconSize: [36, 36],
+        iconAnchor: [18, 18]
+      }),
+      zIndexOffset: 1000
+    }).addTo(map);
+  }
+}
+
+function drawRouteToNext() {
+  if (!currentRoute || !CONTENT.routes[currentRoute]) return;
+  const route = CONTENT.routes[currentRoute];
+  if (currentPointIndex >= route.points.length - 1) return;
+
+  const current = CONTENT.points[route.points[currentPointIndex]];
+  const next = CONTENT.points[route.points[currentPointIndex + 1]];
+  if (!current || !next) return;
+
+  if (routePolyline) map.removeLayer(routePolyline);
+  routePolyline = L.polyline([[current.y, current.x], [next.y, next.x]], {
+    color: '#3b82f6', weight: 4, opacity: 0.8, dashArray: '10, 10'
+  }).addTo(map);
+}
+
+function showRouteToNext() {
+  showMap();
+}
+
+// ==================== ГЕОЛОКАЦИЯ ====================
+function startTrackingLocation() {
+  if (!navigator.geolocation) {
+    console.log("Geolocation not supported");
+    return;
   }
 
-  routeLayer = L.polyline(latlngs, { 
-    color: "#3b82f6", 
-    weight: 4, 
-    opacity: 0.7,
-    dashArray: "8, 6"
+  navigator.geolocation.getCurrentPosition(
+    (pos) => updateUserLocation(pos),
+    (err) => console.log("Geolocation error:", err.message),
+    { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+  );
+
+  watchId = navigator.geolocation.watchPosition(
+    (pos) => updateUserLocation(pos),
+    (err) => console.log("Watch error:", err.message),
+    { enableHighAccuracy: true, timeout: 10000, maximumAge: 30000 }
+  );
+}
+
+function stopTrackingLocation() {
+  if (watchId !== null) {
+    navigator.geolocation.clearWatch(watchId);
+    watchId = null;
+  }
+  if (userLocationMarker) {
+    map.removeLayer(userLocationMarker);
+    userLocationMarker = null;
+  }
+  if (userLocationCircle) {
+    map.removeLayer(userLocationCircle);
+    userLocationCircle = null;
+  }
+}
+
+function updateUserLocation(position) {
+  if (!map) return;
+
+  const lat = position.coords.latitude;
+  const lng = position.coords.longitude;
+  const accuracy = position.coords.accuracy;
+
+  console.log("User location:", lat, lng, "accuracy:", accuracy);
+  showToast(`📍 GPS: точность ~${Math.round(accuracy)}м`);
+
+  if (userLocationMarker) map.removeLayer(userLocationMarker);
+  if (userLocationCircle) map.removeLayer(userLocationCircle);
+
+  userLocationCircle = L.circle([lat, lng], {
+    radius: accuracy,
+    color: '#3b82f6',
+    fillColor: '#3b82f6',
+    fillOpacity: 0.15,
+    weight: 1
   }).addTo(map);
 
-  addArrowsToPath(latlngs, "#3b82f6");
-
-  route.points.forEach((pid, idx) => {
-    const pt = CONTENT.points[pid];
-    if (!pt) return;
-
-    let className, size, zIndex;
-    if (pid === currentPointId) {
-      className = "current-point-marker";
-      size = [40, 40];
-      zIndex = 1000;
-    } else if (visitedPoints.has(pid)) {
-      className = "visited-point-marker";
-      size = [32, 32];
-      zIndex = 100;
-    } else {
-      className = "next-point-marker";
-      size = [36, 36];
-      zIndex = 500;
-    }
-
-    const icon = L.divIcon({ className, html: pt.icon || "📍", iconSize: size, iconAnchor: [size[0]/2, size[1]/2] });
-    L.marker([pt.y, pt.x], { icon, zIndexOffset: zIndex }).addTo(map);
+  const pulseIcon = L.divIcon({
+    className: 'user-location-marker',
+    html: `<div class="user-location-dot"></div>`,
+    iconSize: [20, 20],
+    iconAnchor: [10, 10]
   });
 
-  map.fitBounds(latlngs, { padding: [60, 60] });
+  userLocationMarker = L.marker([lat, lng], {
+    icon: pulseIcon,
+    zIndexOffset: 2000
+  }).addTo(map);
+
+  userLocationMarker.bindPopup("📍 Вы здесь<br>Точность: ~" + Math.round(accuracy) + " м").openPopup();
 }
 
-function addArrowsToPath(latlngs, color) {
-  for (let i = 0; i < latlngs.length - 1; i++) {
-    const from = latlngs[i];
-    const to = latlngs[i + 1];
-    const dist = Math.sqrt((to[0]-from[0])**2 + (to[1]-from[1])**2);
-    const steps = Math.max(1, Math.floor(dist / 150));
-
-    for (let s = 1; s <= steps; s++) {
-      const t = s / (steps + 1);
-      const pos = [from[0] + (to[0]-from[0])*t, from[1] + (to[1]-from[1])*t];
-      const angle = Math.atan2(to[1]-from[1], to[0]-from[0]) * 180 / Math.PI;
-
-      const arrowIcon = L.divIcon({
-        className: "route-arrow",
-        html: `<div style="width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-bottom:10px solid ${color};transform:rotate(${angle-90}deg);"></div>`,
-        iconSize: [12, 12],
-        iconAnchor: [6, 6]
-      });
-
-      L.marker(pos, { icon: arrowIcon, zIndexOffset: 50 }).addTo(map);
-    }
-  }
-}
-
-// ==================== QR-СКАНИРОВАНИЕ ====================
-let videoStream = null;
-let scanInterval = null;
-
-function checkCameraSupport() {
-  const hasGetUserMedia = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
-  const isSecure = window.isSecureContext || location.protocol === 'https:';
-  return { hasGetUserMedia, isSecure };
-}
-
-async function scanQR() {
-  console.log("=== scanQR() ВЫЗВАН ===");
-
-  const support = checkCameraSupport();
-
-  if (!support.isSecure) {
-    showToast("❌ Нужен HTTPS для камеры");
-    console.error("Not secure context");
-    return;
-  }
-
-  if (!support.hasGetUserMedia) {
-    showToast("❌ Камера не поддерживается");
-    console.error("No getUserMedia");
-    return;
-  }
-
-  showToast("📷 Открываю камеру...");
-
-  try {
-    await openCamera();
-  } catch (e) {
-    console.error("Camera error:", e);
-    showToast("❌ Ошибка камеры: " + e.message);
-  }
-}
-
-async function openCamera() {
+// ==================== QR-КОД ====================
+function scanQR() {
   createCameraModal();
-
-  videoStream = await navigator.mediaDevices.getUserMedia({ 
-    video: { facingMode: "environment" },
-    audio: false
-  });
-
-  const video = document.getElementById("qrVideo");
-  video.srcObject = videoStream;
-
-  await new Promise((resolve) => {
-    video.onloadedmetadata = () => resolve();
-  });
-
-  await video.play();
-  updateCameraStatus("🔍 Наведите на QR-код...");
-
-  if ("BarcodeDetector" in window) {
-    startBarcodeDetection(video);
-  } else {
-    startJsQRDetection(video);
-  }
-}
-
-function startBarcodeDetection(video) {
-  const detector = new BarcodeDetector({ formats: ["qr_code"] });
-
-  scanInterval = setInterval(async () => {
-    try {
-      const barcodes = await detector.detect(video);
-      if (barcodes.length > 0) {
-        stopCamera();
-        handleQRResult(barcodes[0].rawValue);
-      }
-    } catch (e) {}
-  }, 300);
-}
-
-async function startJsQRDetection(video) {
-  if (!window.jsQR) {
-    await loadScript("https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js");
-  }
-
-  const canvas = document.getElementById("qrCanvas");
-  const ctx = canvas.getContext("2d", { willReadFrequently: true });
-
-  scanInterval = setInterval(() => {
-    if (video.readyState !== video.HAVE_ENOUGH_DATA) return;
-
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    const code = jsQR(imageData.data, imageData.width, imageData.height, {
-      inversionAttempts: "dontInvert"
-    });
-
-    if (code) {
-      stopCamera();
-      handleQRResult(code.data);
-    }
-  }, 300);
-}
-
-function loadScript(src) {
-  return new Promise((resolve, reject) => {
-    const script = document.createElement("script");
-    script.src = src;
-    script.onload = resolve;
-    script.onerror = () => reject(new Error("Failed to load " + src));
-    document.head.appendChild(script);
-  });
+  startCamera();
 }
 
 function createCameraModal() {
@@ -1071,95 +706,155 @@ function createCameraModal() {
       </div>
     </div>
   `;
-
   document.body.appendChild(modal);
 }
 
-function updateCameraStatus(text) {
+let qrScanInterval = null;
+
+function startCamera() {
+  const video = document.getElementById("qrVideo");
   const status = document.getElementById("cameraStatus");
-  if (status) status.textContent = text;
+
+  if (!video) return;
+
+  navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+    .then(stream => {
+      video.srcObject = stream;
+      if (status) status.textContent = "Камера активна. Сканируйте QR-код...";
+      qrScanInterval = setInterval(scanFrame, 500);
+    })
+    .catch(err => {
+      console.error("Camera error:", err);
+      if (status) status.textContent = "❌ Нет доступа к камере";
+      showToast("❌ Нет доступа к камере");
+    });
 }
 
 function stopCamera() {
-  if (scanInterval) {
-    clearInterval(scanInterval);
-    scanInterval = null;
+  const video = document.getElementById("qrVideo");
+  if (video && video.srcObject) {
+    video.srcObject.getTracks().forEach(t => t.stop());
   }
-  if (videoStream) {
-    videoStream.getTracks().forEach(t => t.stop());
-    videoStream = null;
+  if (qrScanInterval) {
+    clearInterval(qrScanInterval);
+    qrScanInterval = null;
   }
   const modal = document.getElementById("qrModal");
   if (modal) modal.remove();
 }
 
-function handleQRResult(url) {
-  console.log("handleQRResult:", url);
-  let pointId = null;
+function scanFrame() {
+  const video = document.getElementById("qrVideo");
+  const canvas = document.getElementById("qrCanvas");
+  if (!video || !canvas) return;
+
+  canvas.width = video.videoWidth || 640;
+  canvas.height = video.videoHeight || 480;
+  const ctx = canvas.getContext("2d");
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
   try {
-    const urlObj = new URL(url);
-    pointId = urlObj.searchParams.get("point");
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const code = jsQR(imageData.data, canvas.width, canvas.height);
+    if (code) {
+      console.log("QR detected:", code.data);
+      stopCamera();
+      handleQRResult(code.data);
+    }
   } catch (e) {
-    if (CONTENT.points[url]) pointId = url;
-    const match = url.match(/[?&]point=([^&]+)/);
-    if (match) pointId = match[1];
+    // jsQR не найден или ошибка
   }
-
-  console.log("pointId:", pointId);
-
-  if (!pointId || !CONTENT.points[pointId]) {
-    showToast("❌ QR-код не распознан");
-    return;
-  }
-
-  const route = currentRoute ? CONTENT.routes[currentRoute] : null;
-
-  if (!route) {
-    currentPointId = pointId;
-    showGuideFromMap();
-    loadPoint(pointId);
-    showToast(`✅ Точка «${CONTENT.points[pointId]?.title}» открыта!`);
-    return;
-  }
-
-  const expectedNextId = route.points[currentPointIndex + 1];
-
-  if (pointId !== expectedNextId) {
-    showToast(`⚠️ Это не следующая точка! Следующая: ${CONTENT.points[expectedNextId]?.title || expectedNextId}`);
-    return;
-  }
-
-  visitedPoints.add(pointId);
-  saveVisitedPoints();
-  currentPointId = pointId;
-  currentPointIndex++;
-
-  showToast(`✅ Точка «${CONTENT.points[pointId]?.title}» открыта!`);
-  showGuideFromMap();
-  loadPoint(pointId);
 }
 
-function onArrived() {
-  scanQR();
+function handleQRResult(url) {
+  console.log("QR URL:", url);
+  try {
+    const urlObj = new URL(url);
+    const pointId = urlObj.searchParams.get("point");
+
+    if (pointId && CONTENT.points[pointId]) {
+      const route = currentRoute ? CONTENT.routes[currentRoute] : null;
+
+      if (!route) {
+        currentPointId = pointId;
+        showGuideFromMap();
+        loadPoint(pointId);
+        showToast(`✅ Точка «${CONTENT.points[pointId]?.title}» открыта!`);
+        return;
+      }
+
+      const expectedNextId = route.points[currentPointIndex + 1];
+      if (pointId !== expectedNextId) {
+        showToast(`⚠️ Это не следующая точка! Следующая: ${CONTENT.points[expectedNextId]?.title || expectedNextId}`);
+        return;
+      }
+
+      currentPointIndex++;
+      loadPoint(pointId);
+      showToast(`✅ Точка «${CONTENT.points[pointId]?.title}» открыта!`);
+    } else {
+      showToast("❌ Неверный QR-код");
+    }
+  } catch (e) {
+    showToast("❌ Неверный QR-код");
+  }
+}
+
+// ==================== ОФЛАЙН-КЭШ ====================
+async function cacheForOffline() {
+  if (!("serviceWorker" in navigator)) {
+    showToast("⚠️ Браузер не поддерживает офлайн");
+    return;
+  }
+
+  showToast("📦 Кэширование начато...");
+
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    if (!reg.active) {
+      showToast("⚠️ SW не активен. Перезагрузите страницу.");
+      return;
+    }
+
+    reg.active.postMessage({ type: "CACHE_ALL" });
+
+    setTimeout(() => {
+      showToast("✅ Контент сохранён для офлайн!");
+    }, 4000);
+
+  } catch (e) {
+    console.error('cacheForOffline error:', e);
+    showToast("⚠️ Ошибка: " + e.message);
+  }
 }
 
 // ==================== УТИЛИТЫ ====================
-function showToast(msg) {
-  const toast = document.getElementById("toast");
-  if (!toast) return;
-  toast.textContent = msg;
-  toast.classList.add("show");
-  setTimeout(() => toast.classList.remove("show"), 3000);
+function showToast(message) {
+  const existing = document.querySelector(".toast-notification");
+  if (existing) existing.remove();
+
+  const toast = document.createElement("div");
+  toast.className = "toast-notification";
+  toast.textContent = message;
+  toast.style.cssText = "position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#1e293b;color:#fff;padding:12px 20px;border-radius:12px;font-size:14px;z-index:30000;box-shadow:0 4px 12px rgba(0,0,0,0.3);border:1px solid #334155;white-space:nowrap;";
+  document.body.appendChild(toast);
+
+  setTimeout(() => {
+    toast.style.opacity = "0";
+    toast.style.transition = "opacity 0.3s";
+    setTimeout(() => toast.remove(), 300);
+  }, 3000);
 }
 
-// Глобальные функции для inline onclick
+// ==================== ГЛОБАЛНЫЕ ФУНКЦИИ ====================
 window.scanQR = scanQR;
 window.stopCamera = stopCamera;
-window.onArrived = onArrived;
-window.showGuideFromMap = showGuideFromMap;
-window.showRouteToNext = showRouteToNext;
-window.showMap = showMap;
 window.togglePlay = togglePlay;
-window.seekAudio = seekAudio;
-window.setSpeed = setSpeed;
+window.showMap = showMap;
+window.showGuideFromMap = showGuideFromMap;
+window.nextPoint = nextPoint;
+window.prevPoint = prevPoint;
+window.showRouteToNext = showRouteToNext;
+window.startTrackingLocation = startTrackingLocation;
+window.stopTrackingLocation = stopTrackingLocation;
+window.cacheForOffline = cacheForOffline;

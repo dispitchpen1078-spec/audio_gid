@@ -1,4 +1,4 @@
-const CACHE_NAME = 'audio-gid-v6';
+const CACHE_NAME = 'audio-gid-v7';
 
 const URLS_TO_CACHE = [
   './',
@@ -26,7 +26,7 @@ const CONTENT_DATA = {
 
 // ========== INSTALL ==========
 self.addEventListener('install', (e) => {
-  console.log('SW v6: Installing...');
+  console.log('SW v7: Installing...');
   e.waitUntil(
     caches.open(CACHE_NAME).then(async (cache) => {
       for (const url of URLS_TO_CACHE) {
@@ -34,10 +34,10 @@ self.addEventListener('install', (e) => {
           const response = await fetch(url);
           if (response && response.status === 200) {
             await cache.put(url, response);
-            console.log('SW v6 install cached:', url);
+            console.log('SW v7 install cached:', url);
           }
         } catch (err) {
-          console.log('SW v6 install skip:', url, err.message);
+          console.log('SW v7 install skip:', url, err.message);
         }
       }
     }).then(() => {
@@ -48,19 +48,19 @@ self.addEventListener('install', (e) => {
 
 // ========== ACTIVATE ==========
 self.addEventListener('activate', (e) => {
-  console.log('SW v6: Activating...');
+  console.log('SW v7: Activating...');
   e.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((name) => {
           if (name !== CACHE_NAME) {
-            console.log('SW v6: Deleting old cache:', name);
+            console.log('SW v7: Deleting old cache:', name);
             return caches.delete(name);
           }
         })
       );
     }).then(() => {
-      console.log('SW v6: Activated');
+      console.log('SW v7: Activated');
       return self.clients.claim();
     })
   );
@@ -70,12 +70,12 @@ self.addEventListener('activate', (e) => {
 self.addEventListener('fetch', (e) => {
   e.respondWith(
     caches.match(e.request).then((cachedResponse) => {
-      // Если есть в кэше — отдаём из кэша (даже если он пустой/битый)
+      // Если есть в кэше — отдаём из кэша
       if (cachedResponse) {
-        console.log('SW v6: Cache hit:', e.request.url);
+        console.log('SW v7: Cache hit:', e.request.url);
         return cachedResponse;
       }
-      
+
       // Иначе пробуем сеть
       return fetch(e.request).then((networkResponse) => {
         if (networkResponse && networkResponse.status === 200) {
@@ -86,10 +86,10 @@ self.addEventListener('fetch', (e) => {
         }
         return networkResponse;
       }).catch((err) => {
-        // Офлайн и нет в кэше — возвращаем 404 вместо undefined
-        console.log('SW v6: Offline, not cached:', e.request.url);
-        return new Response('Not found', { 
-          status: 404, 
+        // Офлайн и нет в кэше
+        console.log('SW v7: Offline, not cached:', e.request.url);
+        return new Response('Not found', {
+          status: 404,
           statusText: 'Not Found',
           headers: { 'Content-Type': 'text/plain' }
         });
@@ -98,10 +98,10 @@ self.addEventListener('fetch', (e) => {
   );
 });
 
-// ========== MESSAGE ==========
+// ========== MESSAGE (CACHE_ALL) ==========
 self.addEventListener('message', (e) => {
   if (e.data.type === 'CACHE_ALL') {
-    console.log('SW v6: CACHE_ALL started');
+    console.log('SW v7: CACHE_ALL started');
     e.waitUntil(
       caches.open(CACHE_NAME).then(async (cache) => {
         const urls = [];
@@ -110,26 +110,23 @@ self.addEventListener('message', (e) => {
           if (p.audio) urls.push(p.audio);
         });
         urls.push('map.png');
-        
+
         let success = 0;
         let failed = 0;
-        
+
         for (const url of urls) {
           try {
             const cached = await cache.match(url);
             if (cached) {
-              // Проверяем, что кэш не пустой
               const cloned = cached.clone();
               const blob = await cloned.blob();
               if (blob.size > 0) {
-                console.log('SW v6: Already cached:', url, 'size:', blob.size);
+                console.log('SW v7: Already cached:', url, 'size:', blob.size);
                 success++;
                 continue;
-              } else {
-                console.log('SW v6: Cached but empty, re-fetching:', url);
               }
             }
-            
+
             const res = await fetch(url);
             if (res && res.status === 200) {
               const resClone = res.clone();
@@ -137,22 +134,30 @@ self.addEventListener('message', (e) => {
               if (blob.size > 0) {
                 await cache.put(url, res);
                 success++;
-                console.log('SW v6: Cached:', url, 'size:', blob.size);
+                console.log('SW v7: Cached:', url, 'size:', blob.size);
               } else {
                 failed++;
-                console.log('SW v6: Empty response:', url);
+                console.log('SW v7: Empty response:', url);
               }
             } else {
               failed++;
-              console.log('SW v6: Fetch failed:', url, res?.status);
+              console.log('SW v7: Fetch failed:', url, res?.status);
             }
           } catch (err) {
             failed++;
-            console.log('SW v6: Error:', url, err.message);
+            console.log('SW v7: Error:', url, err.message);
           }
         }
-        
-        console.log(`SW v6: Done. Success: ${success}, Failed: ${failed}`);
+
+        console.log(`SW v7: Done. Success: ${success}, Failed: ${failed}`);
+
+        if (e.source) {
+          e.source.postMessage({
+            type: 'CACHE_COMPLETE',
+            success: success,
+            failed: failed
+          });
+        }
       })
     );
   }
