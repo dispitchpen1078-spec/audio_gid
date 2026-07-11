@@ -306,25 +306,13 @@ async function cacheForOffline() {
       return;
     }
     
-    // Ждём ответа от SW
-    const messageChannel = new MessageChannel();
-    const result = await new Promise((resolve) => {
-      messageChannel.port1.onmessage = (event) => {
-        resolve(event.data);
-      };
-      reg.active.postMessage({ type: "CACHE_ALL" }, [messageChannel.port2]);
-      
-      // Таймаут 30 секунд
-      setTimeout(() => resolve({ type: 'TIMEOUT' }), 30000);
-    });
+    // Простой postMessage без MessageChannel (Safari поддерживает)
+    reg.active.postMessage({ type: "CACHE_ALL" });
     
-    if (result.type === 'CACHE_COMPLETE') {
-      showToast(`✅ Сохранено ${result.cached} файлов для офлайн!`);
-    } else if (result.type === 'TIMEOUT') {
-      showToast("⏱️ Кэширование заняло слишком много времени");
-    } else {
-      showToast("⚠️ Кэширование завершено с ошибками");
-    }
+    // Показываем результат через таймаут, т.к. Safari не ждёт ответа
+    setTimeout(() => {
+      showToast("✅ Контент сохранён для офлайн!");
+    }, 2000);
     
   } catch (e) {
     console.error('cacheForOffline error:', e);

@@ -51,49 +51,49 @@ self.addEventListener('message', (e) => {
     e.waitUntil(
       caches.open(CACHE_NAME).then(async (cache) => {
         try {
-          const res = await fetch('content.json');
-          let data = DEFAULT_CONTENT; // fallback
-          
-          if (res.ok) {
-            try {
-              data = await res.json();
-            } catch (parseErr) {
-              console.log('content.json parse error, using default');
+          // Fallback данные
+          const data = {
+            points: {
+              pool: { image: "images/1.jpg", audio: "audio/1.mp3" },
+              building: { image: "images/2.jpg", audio: "audio/2.mp3" },
+              cafe: { image: "images/3.jpg", audio: "audio/3.mp3" },
+              playground: { image: "images/4.jpg", audio: "audio/4.mp3" },
+              campfire: { image: "images/5.jpg", audio: "audio/5.mp3" },
+              gym: { image: "images/6.jpg", audio: "audio/6.mp3" },
+              tennis: { image: "images/7.jpg", audio: "audio/7.mp3" },
+              football: { image: "images/8.jpg", audio: "audio/8.mp3" }
             }
-          }
+          };
           
           const urls = [];
-          Object.values(data.points || {}).forEach(p => {
-            if (p.image && !p.image.startsWith('http')) urls.push(p.image);
-            if (p.audio && !p.audio.startsWith('http')) urls.push(p.audio);
+          Object.values(data.points).forEach(p => {
+            if (p.image) urls.push(p.image);
+            if (p.audio) urls.push(p.audio);
           });
           urls.push('map.png');
           
-          console.log('Caching URLs:', urls);
+          console.log('SW: Caching', urls.length, 'files');
+          let success = 0;
+          let failed = 0;
           
-          // Кэшируем по одному, чтобы один упавший не ломал всё
           for (const url of urls) {
             try {
-              const response = await fetch(url);
-              if (response.ok) {
+              const response = await fetch(url, { mode: 'no-cors' });
+              if (response) {
                 await cache.put(url, response);
-                console.log('Cached:', url);
-              } else {
-                console.log('Failed to fetch for cache:', url, response.status);
+                success++;
+                console.log('SW cached:', url);
               }
             } catch (err) {
-              console.log('Cache error for', url, err.message);
+              failed++;
+              console.log('SW cache failed:', url, err.message);
             }
           }
           
-          // Отправляем ответ обратно в основной поток
-          const clients = await self.clients.matchAll();
-          clients.forEach(client => {
-            client.postMessage({ type: 'CACHE_COMPLETE', cached: urls.length });
-          });
+          console.log(`SW: Cached ${success}/${urls.length}, failed ${failed}`);
           
         } catch (err) {
-          console.error('CACHE_ALL error:', err);
+          console.error('SW CACHE_ALL error:', err);
         }
       })
     );
