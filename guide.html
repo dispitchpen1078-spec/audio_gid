@@ -1,142 +1,123 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>Аудиогид</title>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<link rel="stylesheet" href="guide-style.css">
-<meta name="theme-color" content="#0f172a">
-<link rel="manifest" href="manifest.json">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Аудиогид</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="guide-style.css">
 </head>
 <body>
-<div id="app">
-  <div class="splash-screen" id="splash">
-    <div class="splash-content">
-      <div class="splash-icon">🏛️</div>
-      <h1>Аудиогид</h1>
-      <p>Загрузка...</p>
-      <div class="loading-spinner"></div>
-    </div>
+  <!-- Экран загрузки -->
+  <div id="splashScreen" style="position:fixed;inset:0;background:#0f172a;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:10000;color:#fff;">
+    <div style="font-size:48px;margin-bottom:16px;">🎧</div>
+    <h1 style="font-size:24px;margin:0 0 8px;">Аудиогид</h1>
+    <p style="color:#94a3b8;margin:0;">Загрузка...</p>
   </div>
 
-  <div class="route-select-screen" id="routeSelect" style="display:none">
-    <div class="route-select-content">
-      <div class="route-header">
-        <div class="route-icon">🗺️</div>
-        <h2>Выберите маршрут</h2>
-        <p>Или отсканируйте QR-код у первой точки</p>
-      </div>
-      <div id="route-list" class="route-list"></div>
+  <!-- Экран выбора маршрута -->
+  <div id="routeSelect" style="display:none;min-height:100vh;background:#0f172a;color:#fff;padding:16px;">
+    <div class="route-header" style="text-align:center;padding:20px 0;">
+      <div class="route-icon" style="font-size:48px;margin-bottom:8px;">🗺️</div>
+      <h2 style="margin:0 0 8px;">Доступные маршруты</h2>
+      <p style="color:#94a3b8;margin:0;">Выберите маршрут для начала экскурсии</p>
     </div>
+    <div id="route-list" style="max-width:400px;margin:0 auto;"></div>
   </div>
 
-  <div class="guide-screen" id="guideScreen" style="display:none">
-    <div class="guide-header">
-      <button class="back-btn" id="backBtn" onclick="showMap()">🗺️ Карта</button>
-      <div class="route-badge" id="routeBadge">Маршрут</div>
-      <div class="point-counter" id="pointCounter">1 / 5</div>
-    </div>
+  <!-- Экран гида -->
+  <div id="guideScreen" style="display:none;min-height:100vh;background:#0f172a;color:#fff;">
+    <div style="padding:16px;max-width:500px;margin:0 auto;">
+      <!-- Шапка -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+        <button onclick="showRouteSelect()" style="background:#334155;border:none;color:#fff;padding:8px 16px;border-radius:8px;cursor:pointer;">← Маршруты</button>
+        <span id="routeName" style="color:#94a3b8;font-size:14px;"></span>
+      </div>
 
-    <div class="point-card" id="pointCard">
-      <div class="point-image-wrap">
-        <img id="pointImage" src="" alt="">
-        <div class="point-icon-overlay" id="pointIcon">📍</div>
-        <div class="point-number" id="pointNumber">1</div>
-      </div>
-      <div class="point-info">
-        <h2 id="pointTitle">Название точки</h2>
-        <p id="pointDesc">Описание точки...</p>
-      </div>
-    </div>
-
-    <div class="stats-bar" id="statsBar">
-      <div class="stat-item">
-        <span class="stat-icon">👣</span>
-        <span class="stat-value" id="statSteps">0</span>
-        <span class="stat-label">шагов</span>
-      </div>
-      <div class="stat-item">
-        <span class="stat-icon">📏</span>
-        <span class="stat-value" id="statMeters">0</span>
-        <span class="stat-label">метров</span>
-      </div>
-      <div class="stat-item">
-        <span class="stat-icon">🔥</span>
-        <span class="stat-value" id="statCalories">0</span>
-        <span class="stat-label">ккал</span>
-      </div>
-    </div>
-
-    <div class="audio-player" id="audioPlayer">
-      <div class="audio-progress-wrap">
-        <div class="audio-progress-bar" id="audioProgressBar">
-          <div class="audio-progress-fill" id="audioProgressFill"></div>
+      <!-- Прогресс маршрута -->
+      <div style="background:#1e293b;border-radius:12px;padding:12px;margin-bottom:16px;">
+        <div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:13px;color:#94a3b8;">
+          <span>Прогресс маршрута</span>
+          <span id="routeProgressText">0%</span>
         </div>
-        <div class="audio-time">
-          <span id="audioCurrent">0:00</span>
-          <span id="audioDuration">0:00</span>
+        <div style="background:#334155;border-radius:4px;height:6px;overflow:hidden;">
+          <div id="routeProgress" style="background:#3b82f6;height:100%;width:0%;transition:width 0.3s;"></div>
         </div>
       </div>
-      <div class="audio-controls">
-        <button class="audio-btn rewind" id="rewindBtn" onclick="seekAudio(-10)">⏪</button>
-        <button class="audio-btn play-pause" id="playPauseBtn" onclick="togglePlay()">▶️</button>
-        <button class="audio-btn forward" id="forwardBtn" onclick="seekAudio(10)">⏩</button>
-      </div>
-      <div class="audio-speed">
-        <button class="speed-btn" data-speed="0.8" onclick="setSpeed(0.8)">0.8x</button>
-        <button class="speed-btn active" data-speed="1" onclick="setSpeed(1)">1x</button>
-        <button class="speed-btn" data-speed="1.5" onclick="setSpeed(1.5)">1.5x</button>
-        <button class="speed-btn" data-speed="2" onclick="setSpeed(2)">2x</button>
-      </div>
-    </div>
 
-    <div class="next-point-section" id="nextPointSection">
-      <div class="next-point-info" id="nextPointInfo">
-        <span>📍 Следующая: </span>
-        <strong id="nextPointName">—</strong>
+      <!-- Карточка точки -->
+      <div style="background:#1e293b;border-radius:16px;overflow:hidden;margin-bottom:16px;border:1px solid #334155;">
+        <img id="pointImage" src="" alt="" style="width:100%;height:200px;object-fit:cover;display:none;">
+        <div style="padding:16px;">
+          <h1 id="pointTitle" style="margin:0 0 8px;font-size:20px;">Точка</h1>
+          <p id="pointDescription" style="color:#94a3b8;margin:0 0 16px;line-height:1.5;">Описание точки</p>
+
+          <!-- Статистика -->
+          <div style="display:flex;gap:12px;margin-bottom:16px;">
+            <div style="background:#0f172a;padding:8px 12px;border-radius:8px;text-align:center;flex:1;">
+              <div style="font-size:18px;">📏</div>
+              <div id="distanceValue" style="font-size:14px;font-weight:bold;">0 м</div>
+              <div style="font-size:11px;color:#64748b;">До следующей</div>
+            </div>
+            <div style="background:#0f172a;padding:8px 12px;border-radius:8px;text-align:center;flex:1;">
+              <div style="font-size:18px;">👟</div>
+              <div id="stepsValue" style="font-size:14px;font-weight:bold;">0</div>
+              <div style="font-size:11px;color:#64748b;">Шагов</div>
+            </div>
+            <div style="background:#0f172a;padding:8px 12px;border-radius:8px;text-align:center;flex:1;">
+              <div style="font-size:18px;">🔥</div>
+              <div id="caloriesValue" style="font-size:14px;font-weight:bold;">0</div>
+              <div style="font-size:11px;color:#64748b;">Ккал</div>
+            </div>
+          </div>
+
+          <!-- Аудиоплеер -->
+          <div style="background:#0f172a;border-radius:12px;padding:12px;">
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
+              <button id="playPauseBtn" onclick="togglePlay()" style="background:#3b82f6;border:none;color:#fff;width:48px;height:48px;border-radius:50%;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;">▶️</button>
+              <div style="flex:1;">
+                <div id="audioDuration" style="font-size:13px;color:#94a3b8;">0:00</div>
+              </div>
+            </div>
+            <div id="audioProgressBar" style="background:#334155;border-radius:4px;height:6px;cursor:pointer;margin-bottom:4px;">
+              <div id="audioProgressFill" style="background:#3b82f6;height:100%;width:0%;border-radius:4px;transition:width 0.1s;"></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:11px;color:#64748b;">
+              <span id="audioCurrent">0:00</span>
+              <span id="audioTotal">0:00</span>
+            </div>
+          </div>
+        </div>
       </div>
-      <button class="next-point-btn" id="nextPointBtn" onclick="showRouteToNext()">
-        <span>🗺️ Показать путь</span>
-        <small id="nextPointDistance">0 м</small>
+
+      <!-- Кнопки навигации -->
+      <div style="display:flex;gap:12px;margin-bottom:16px;">
+        <button onclick="prevPoint()" style="flex:1;background:#334155;border:none;color:#fff;padding:14px;border-radius:12px;font-size:16px;cursor:pointer;">← Назад</button>
+        <button onclick="showMap()" style="flex:1;background:#334155;border:none;color:#fff;padding:14px;border-radius:12px;font-size:16px;cursor:pointer;">🗺️ Карта</button>
+        <button onclick="nextPoint()" style="flex:1;background:#3b82f6;border:none;color:#fff;padding:14px;border-radius:12px;font-size:16px;cursor:pointer;">Далее →</button>
+      </div>
+
+      <!-- QR сканер -->
+      <button onclick="scanQR()" style="width:100%;background:#10b981;border:none;color:#fff;padding:14px;border-radius:12px;font-size:16px;cursor:pointer;margin-bottom:16px;">
+        📷 Сканировать QR-код
       </button>
     </div>
-
-    <div class="qr-scan-section" id="qrScanSection">
-      <div class="qr-divider">
-        <span>или</span>
-      </div>
-      <button class="qr-scan-btn" id="qrScanBtn" onclick="scanQR()">
-        <span>📷 Сканировать QR-код</span>
-        <small>следующей точки</small>
-      </button>
-    </div>
-
-    <div style="height: 40px; flex-shrink: 0;"></div>
   </div>
 
-  <div class="map-screen" id="mapScreen" style="display:none">
-    <div class="map-header">
-      <button class="map-back-btn" onclick="showGuideFromMap()">← Назад</button>
-      <div class="map-title" id="mapTitle">Маршрут</div>
+  <!-- Экран карты -->
+  <div id="mapScreen" style="display:none;position:fixed;inset:0;background:#0f172a;z-index:1000;">
+    <div style="position:absolute;top:0;left:0;right:0;z-index:1001;padding:16px;display:flex;justify-content:space-between;align-items:center;">
+      <button onclick="showGuideFromMap()" style="background:rgba(30,41,59,0.9);border:none;color:#fff;padding:10px 16px;border-radius:8px;cursor:pointer;font-size:14px;">← Назад к гиду</button>
+      <button onclick="showRouteToNext()" style="background:rgba(59,130,246,0.9);border:none;color:#fff;padding:10px 16px;border-radius:8px;cursor:pointer;font-size:14px;">🧭 Маршрут</button>
     </div>
-    <div id="map"></div>
-    <div class="map-footer">
-      <div class="map-instruction" id="mapInstruction">
-        Идите по зелёной линии к следующей точке
-      </div>
-      <button class="arrived-btn" id="arrivedBtn" onclick="onArrived()">
-        📷 Сканировать QR
-      </button>
-    </div>
+    <div id="mapContainer" style="width:100%;height:100%;"></div>
   </div>
 
-  <div class="toast" id="toast"></div>
-</div>
-
-<script src="guide-app.js"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+  <script src="guide-app.js"></script>
 </body>
 </html>
