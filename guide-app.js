@@ -516,20 +516,22 @@ function setupAudioEvents(audioObj) {
     if (progressFill) progressFill.style.width = pct + "%";
     if (currentEl) currentEl.textContent = formatTime(audioObj.currentTime);
   });
-
+  
+  // Важно: при окончании сбрасываем кнопку на ▶️
   audioObj.addEventListener("ended", () => {
+    console.log("Audio ended");
     const playBtn = document.getElementById("playPauseBtn");
     if (playBtn) playBtn.textContent = "▶️";
     showToast("🎧 Аудиогид завершён!");
   });
-
+  
   audioObj.addEventListener("error", (e) => {
     console.error("Audio error:", e);
     const playBtn = document.getElementById("playPauseBtn");
     if (playBtn) playBtn.textContent = "❌";
     showToast("❌ Ошибка аудио");
   });
-
+  
   const progressBar = document.getElementById("audioProgressBar");
   if (progressBar) {
     progressBar.onclick = (e) => {
@@ -543,17 +545,53 @@ function setupAudioEvents(audioObj) {
 
 function togglePlay() {
   const audioUrl = window.currentAudioUrl;
-  if (!audioUrl) return;
+  console.log("togglePlay(), audioUrl:", audioUrl);
+  
+  if (!audioUrl) {
+    console.log("No audioUrl, returning");
+    return;
+  }
 
-  if (!audio || audio.src !== audioUrl) {
+  // Нормализуем URL для сравнения
+  const fullUrl = new URL(audioUrl, location.href).href;
+  
+  // Если аудио не создано или URL другой — создаём новое
+  const needNewAudio = !audio || !audio.src || audio.src !== fullUrl;
+  
+  if (needNewAudio) {
+    console.log("Creating new Audio for:", audioUrl);
     showToast("⏳ Загрузка аудио...");
+
+    if (audio) {
+      audio.pause();
+      audio.currentTime = 0;
+      audio = null;
+    }
 
     audio = new Audio(audioUrl);
     audio.preload = "auto";
+    audio.playsInline = true;
 
-    setupAudioEvents(audio);
+    // Обработка ошибок
+    audio.addEventListener("error", (e) => {
+      console.error("Audio load error:", e);
+      console.error("Audio error code:", audio.error?.code);
+      const code = audio.error?.code;
+      let msg = "❌ Ошибка аудио";
+      if (code === 2) msg = "❌ Сетевая ошибка";
+      if (code === 3) msg = "❌ Формат не поддерживается";
+      if (code === 4) msg = "❌ Файл не найден";
+      
+      const playBtn = document.getElementById("playPauseBtn");
+      const durationEl = document.getElementById("audioDuration");
+      if (playBtn) playBtn.textContent = "❌";
+      if (durationEl) durationEl.textContent = msg;
+      showToast(msg);
+    });
 
+    // Когда готово к воспроизведению
     audio.addEventListener("canplaythrough", () => {
+      console.log("Audio canplaythrough, duration:", audio.duration);
       audioCache[audioUrl] = audio;
       const durationEl = document.getElementById("audioDuration");
       const playBtn = document.getElementById("playPauseBtn");
@@ -562,15 +600,19 @@ function togglePlay() {
       audio.play();
     });
 
+    setupAudioEvents(audio);
     audio.load();
     return;
   }
 
+  // Аудио уже загружено — play/pause
   if (audio.paused) {
+    console.log("Playing existing audio");
     audio.play();
     const playBtn = document.getElementById("playPauseBtn");
     if (playBtn) playBtn.textContent = "⏸️";
   } else {
+    console.log("Pausing existing audio");
     audio.pause();
     const playBtn = document.getElementById("playPauseBtn");
     if (playBtn) playBtn.textContent = "▶️";
