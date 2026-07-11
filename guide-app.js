@@ -232,26 +232,40 @@ function showRouteSelect(firstPointId) {
   if (!list) return;
   list.innerHTML = "";
 
+  // Если firstPointId не передан — показываем ВСЕ маршруты
   const availableRoutes = [];
   Object.entries(CONTENT.routes || {}).forEach(([id, route]) => {
-    if (route.points && route.points[0] === firstPointId) {
+    if (!firstPointId || route.points[0] === firstPointId) {
       availableRoutes.push({ id, route });
     }
   });
 
-  if (availableRoutes.length === 0) {
-    showGuide();
-    loadPoint(firstPointId);
-    return;
-  }
-
+  // Заголовок
   const header = document.querySelector(".route-header");
   if (header) {
-    header.innerHTML = `
-      <div class="route-icon">🗺️</div>
-      <h2>Выберите маршрут</h2>
-      <p>Точка: ${CONTENT.points[firstPointId]?.title || "Старт"}</p>
+    if (firstPointId && CONTENT.points[firstPointId]) {
+      header.innerHTML = `
+        <div class="route-icon">🗺️</div>
+        <h2>Выберите маршрут</h2>
+        <p>Точка: ${CONTENT.points[firstPointId].title}</p>
+      `;
+    } else {
+      header.innerHTML = `
+        <div class="route-icon">🗺️</div>
+        <h2>Доступные маршруты</h2>
+        <p>Выберите маршрут для начала экскурсии</p>
+      `;
+    }
+  }
+
+  if (availableRoutes.length === 0) {
+    list.innerHTML = `
+      <div class="route-item" style="text-align:center;">
+        <h3>😕 Нет доступных маршрутов</h3>
+        <p>Маршруты не настроены</p>
+      </div>
     `;
+    return;
   }
 
   availableRoutes.forEach(({ id, route }) => {
@@ -270,10 +284,11 @@ function showRouteSelect(firstPointId) {
         <span>⏱️ ~${duration} мин</span>
       </div>
     `;
-    item.onclick = () => startRoute(id, firstPointId);
+    item.onclick = () => startRoute(id, route.points[0]);
     list.appendChild(item);
   });
 
+  // Кнопка офлайн
   const offlineBtn = document.createElement("button");
   offlineBtn.className = "route-item";
   offlineBtn.style.cssText = "background: #1e3a8a; border-color: #3b82f6; margin-top: 16px; cursor: pointer;";
@@ -288,8 +303,27 @@ function showRouteSelect(firstPointId) {
   list.appendChild(offlineBtn);
 }
 
+  const offlineBtn = document.createElement("button");
+  offlineBtn.className = "route-item";
+  offlineBtn.style.cssText = "background: #1e3a8a; border-color: #3b82f6; margin-top: 16px; cursor: pointer;";
+  offlineBtn.innerHTML = `
+    <h3>💾 Скачать маршруты для офлайн</h3>
+    <p style="color: #93c5fd;">Все аудио и карта будут доступны без интернета</p>
+    <div class="route-meta">
+      <span>📦 Кэширование контента</span>
+    </div>
+  `;
+  offlineBtn.onclick = cacheForOffline;
+  list.appendChild(offlineBtn);
+
+
 function showRouteSelectForRoute(routeId) {
-  showRouteSelect(CONTENT.routes[routeId].points[0]);
+  const route = CONTENT.routes[routeId];
+  if (route && route.points.length > 0) {
+    showRouteSelect(route.points[0]);
+  } else {
+    showRouteSelect(); // ← без параметра, покажет все
+  }
 }
 
 function startRoute(routeId, firstPointId) {
